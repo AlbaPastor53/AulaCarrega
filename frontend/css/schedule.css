@@ -1,0 +1,13 @@
+/*
+  FITXER: css/schedule.css
+  RESPONSABILITAT:
+    Estils de la pàgina d'horari setmanal (pages/schedule.html).
+
+  A TENIR EN COMPTE:
+    - Graella de 5 dies (Dilluns a Divendres).
+    - Cada dia mostra els blocs amb hora d'inici, fi i tipus.
+    - Diferenciar visualment Class i Break.
+    - Estats: dia desactivat, bloc seleccionat i mode edició.
+    - Disseny responsive: en mòbil, els dies s'apilen en vertical.
+    - Reutilitzar les variables de color de css/style.css si existeixen.
+*/

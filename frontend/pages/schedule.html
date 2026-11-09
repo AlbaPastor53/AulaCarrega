@@ -1,0 +1,17 @@
+<!--
+  PÀGINA: pages/schedule.html
+  RESPONSABILITAT:
+    Editar l'horari setmanal de classes de l'usuari.
+
+  ENDPOINTS:
+    GET /api/class-schedules/me
+    PUT /api/class-schedules/me
+
+  A TENIR EN COMPTE:
+    - Dies permesos: Dilluns, Dimarts, Dimecres, Dijous i Divendres.
+    - Cada dia té: enabled (activat/desactivat) i blocks[].
+    - Cada bloc té: start ("HH:MM"), end ("HH:MM") i type (Class | Break).
+    - Validar abans d'enviar: inici < fi i format d'hora correcte.
+    - Enviar el body com { week: [...] }.
+    - Mostrar missatge d'èxit o error provinent del backend.
+-->

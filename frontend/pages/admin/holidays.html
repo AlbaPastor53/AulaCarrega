@@ -1,0 +1,18 @@
+<!--
+  PÀGINA: pages/admin/holidays.html
+  RESPONSABILITAT:
+    Gestionar festius, vacances i dies no lectius.
+
+  ENDPOINTS:
+    GET    /api/holidays
+    POST   /api/holidays
+    PATCH  /api/holidays/:id
+    DELETE /api/holidays/:id
+
+  A TENIR EN COMPTE:
+    - Només accessible per a Admin.
+    - Camps: name, type, start_date, end_date i description.
+    - Tipus permesos: Holiday, Vacation, NonSchoolDay.
+    - Validar que end_date sigui igual o posterior a start_date.
+    - Filtrar per any o rang de dates per veure el calendari.
+-->

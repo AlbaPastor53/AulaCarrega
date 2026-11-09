@@ -1,0 +1,13 @@
+/*
+  FITXER: css/reservations.css
+  RESPONSABILITAT:
+    Estils de la pàgina de torns i historial (pages/reservations.html).
+
+  A TENIR EN COMPTE:
+    - Targetes o taula per als torns de càrrega.
+    - Colors per estat: Pending, InProgress, Completed, Cancelled, NotUsed.
+    - Separar visualment torns actuals i historial.
+    - Estat buit quan no hi ha torns.
+    - Disseny responsive: taula amb scroll horitzontal en mòbil.
+    - Reutilitzar les variables de color de css/style.css si existeixen.
+*/

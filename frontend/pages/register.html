@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crea el teu compte · aulacarrega</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <main class="auth auth--register">
+
+    <aside class="hero" aria-label="Mobilitat elèctrica a l'institut">
+      <div class="brand">
+        <span class="brand__icon" aria-hidden="true">⚡</span>
+        <div>
+          <span class="brand__name">aulacarrega</span>
+          <span class="brand__tagline">MOBILITAT QUE EDUCA</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow">UN CAMPUS MÉS SOSTENIBLE</p>
+        <h2>El teu futur es mou amb energia neta.</h2>
+        <p class="hero__description">
+          Connecta el teu cotxe. Continua aprenent. La mobilitat
+          elèctrica comença al teu institut.
+        </p>
+        <div class="hero__features">
+          <span>Càrrega connectada</span>
+          <span>Comunitat educativa</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel" aria-labelledby="register-title">
+      <p class="help">Necessites ajuda?<a href="/contacto">Contacta amb el centre</a> </p>
+
+      <div class="content">
+        <h1 id="register-title">Crea el teu compte</h1>
+        <p class="subtitle">Accedeix als punts de càrrega de l'institut</p>
+
+        <form id="registerForm" novalidate>
+          <div class="row">
+            <div class="field">
+              <label for="first-name">Nom</label>
+              <input id="first-name" name="firstName" autocomplete="given-name"
+                required>
+            </div>
+
+            <div class="field">
+              <label for="last-name">Cognoms</label>
+              <input id="last-name" name="lastName" autocomplete="family-name"
+                required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="email">Correu electrònic</label>
+            <input id="email" name="email" type="email" autocomplete="email"
+              aria-describedby="email-hint" required>
+            <p class="hint" id="email-hint">Utilitza el teu correu de GVA.</p>
+          </div>
+
+          <div class="field">
+            <label for="course">Tipus d'estudis:</label>
+            <select id="course" name="course" required>
+                <option value="">Selecciona una opció</option>
+                <option value="batxillerat">Batxillerat</option>
+                <option value="fp_basica">FP bàsica</option>
+                <option value="mitja">Cicle formatiu mitjà</option>
+                <option value="superior">Cicle formatiu superior</option>
+            </select>
+
+            <br>
+            <label for="estudis">Estudis concrets:</label>
+            <select id="estudis" name="estudis" required>
+                <option value="">Primer selecciona el tipus d'estudis</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="nia">NIA (Número d'Identificació de l'Alumne/a)</label>
+            <input id="nia" name="nia" type="text"
+              inputmode="numeric" placeholder="12345678" required>
+          </div>
+
+          <div class="field">
+            <label for="car">Matrícula</label>
+            <input id="car" name="car" type="text" placeholder="Ex: 1234 ABC"
+              autocomplete="off" required>
+          </div>
+
+          <div class="field">
+            <label for="password">Contrasenya</label>
+            <input id="password" name="password"type="password" minlength="8"
+              pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" aria-describedby="password-hint"
+              required>
+            <p class="hint" id="password-hint">Utilitza almenys 8 caràcters, lletres i números.</p>
+          </div>
+
+          <div class="field">
+            <label for="confirm-password">Confirmar contrasenya</label>
+            <input id="confirm-password" name="confirmPassword" type="password"
+              minlength="8" required>
+          </div>
+
+          <label class="terms">
+            <input type="checkbox" name="terms" required>
+            <span>Accepte els <a href="#">termes d'ús del punt de càrrega de l'institut</a></span>
+          </label>
+
+          <button class="primary" type="submit">Crear compte <span aria-hidden="true">→</span></button>
+        </form>
+
+        <div id="registerMessage" style="margin-top: 16px; text-align: center; font-size: 13px;"></div>
+
+        <p class="switch">Ja tens compte?
+          <a href="./login.html">Inicia sessió</a>
+        </p>
+      </div>
+
+      <footer class="footer">
+        <span>© 2026 aulacarrega</span>
+        <nav aria-label="Enllaços d'ajuda">
+          <a href="#">Privacitat</a>
+          <a href="#">Ajuda</a>
+        </nav>
+      </footer>
+    </section>
+  </main>
+  <script src="../js/register.js"></script>
+</body>
+</html>

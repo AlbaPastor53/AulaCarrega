@@ -1,0 +1,22 @@
+<!--
+  PÀGINA: pages/admin/reservations.html
+  RESPONSABILITAT:
+    Gestionar els torns de càrrega de tots els usuaris.
+
+  ENDPOINTS:
+    GET   /api/charging-schedules
+    POST  /api/charging-schedules
+    PATCH /api/charging-schedules/:id
+    POST  /api/charging-schedules/:id/connect
+    POST  /api/charging-schedules/:id/disconnect
+    POST  /api/charging-schedules/:id/cancel
+    DELETE /api/charging-schedules/:id
+
+  A TENIR EN COMPTE:
+    - Només accessible per a Admin.
+    - Filtres: date, from, to, user, charger i status.
+    - En crear: user_id, charger, date, start_time, end_time i assigned_hours.
+    - El backend rebutja solapaments de carregador o d'usuari.
+    - No es pot completar un torn sense connexió i desconnexió.
+    - Mostrar noms d'usuari i carregador, no només els ObjectId.
+-->

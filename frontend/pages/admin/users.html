@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuaris · AulaCarrega</title>
+  <link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+<body>
+  <!-- Menú lateral -->
+  <aside class="sidebar">
+    <a class="brand" href="../dash_admin.html">
+      <span class="brand-icon" aria-hidden="true">ϟ</span>
+      <span>
+        <strong>aulacarrega</strong>
+        <small>PANEL D'ADMINISTRACIÓ</small>
+      </span>
+    </a>
+
+    <nav class="navigation" aria-label="Navegació principal">
+      <p class="nav-heading">Gestió del centre</p>
+      <a class="nav-item" href="../dash_admin.html">
+        <span class="nav-icon" aria-hidden="true">▦</span>
+        Vista general
+      </a>
+      <a class="nav-item" href="../chargers.html">
+        <span class="nav-icon" aria-hidden="true">ϟ</span>
+        Punts de càrrega
+      </a>
+      <a class="nav-item" href="reservations.html">
+        <span class="nav-icon" aria-hidden="true">▣</span>
+        Reserves
+      </a>
+      <a class="nav-item active" href="users.html" aria-current="page">
+        <span class="nav-icon" aria-hidden="true">♧</span>
+        Usuaris
+      </a>
+      <a class="nav-item" href="reports.html">
+        <span class="nav-icon" aria-hidden="true">▥</span>
+        Informes
+      </a>
+      <a class="nav-item" href="holidays.html">
+        <span class="nav-icon" aria-hidden="true">▤</span>
+        Festius
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="profile">
+        <span class="avatar" id="profileAvatar" aria-hidden="true">A</span>
+        <div class="profile-details">
+          <strong id="profileName">Administrador</strong>
+          <small id="profileRole">Admin</small>
+        </div>
+      </div>
+      <button class="button button--secondary sidebar-logout" id="logout" type="button">
+        Tancar sessió
+      </button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <nav class="breadcrumbs" aria-label="Ruta de navegació">
+        <a href="../dash_admin.html">Administració</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Usuaris</span>
+      </nav>
+      <div class="topbar-actions">
+        <span id="lastUpdated">Carregant…</span>
+        <button class="button button--secondary" id="refresh" type="button">Actualitzar</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="page-heading">
+        <div>
+          <h1>Usuaris</h1>
+          <p class="lead">Gestiona els usuaris del centre de càrrega.</p>
+        </div>
+        <div class="heading-actions">
+          <button class="button button--primary" id="openUserModal" type="button">
+            ＋ Crear usuari
+          </button>
+        </div>
+      </section>
+
+      <section class="list-panel form-panel" aria-label="Llista d'usuaris">
+        <form id="filtersForm" class="filters" aria-label="Filtres de cerca">
+          <input id="search" type="search" name="search" placeholder="Cerca per nom o correu…">
+          <select id="filterRole" name="role" aria-label="Filtrar per rol">
+            <option value="">Tots els usuaris</option>
+            <option value="User">Usuari</option>
+            <option value="Admin">Administrador</option>
+          </select>
+          <select id="filterActive" name="isActive" aria-label="Filtrar per estat">
+            <option value="">Tots els estats</option>
+            <option value="active">Actius</option>
+            <option value="inactive">Inactius</option>
+          </select>
+          <button type="submit" class="button button--secondary">Aplicar filtres</button>
+        </form>
+
+        <p class="message" id="message" role="status"></p>
+
+        <section class="users-list">
+          <table class="table--compact">
+            <thead>
+              <tr>
+                <th scope="col">Nom</th>
+                <th scope="col">Correu electrònic</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Estat</th>
+                <th scope="col">Penalitzacions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <tr><td colspan="5" class="empty-state">Carregant usuaris…</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <footer class="list-footer">
+          <p id="listSummary">0 usuaris</p>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="userModal">
+    <form id="userForm">
+      <h2>Crear usuari</h2>
+
+      <label>Nom
+        <input id="newFirstName" type="text" required>
+      </label>
+
+      <label>Cognoms
+        <input id="newLastName" type="text" required>
+      </label>
+
+      <label>Correu electrònic
+        <input id="newEmail" type="email" required>
+      </label>
+
+      <label>Tipus d'estudis
+        <select id="newCourse" required>
+          <option value="">Selecciona una opció</option>
+          <option value="batxillerat">Batxillerat</option>
+          <option value="fp_basica">FP bàsica</option>
+          <option value="mitja">Cicle formatiu mitjà</option>
+          <option value="superior">Cicle formatiu superior</option>
+        </select>
+      </label>
+
+      <label>Estudis concrets
+        <select id="newEstudis" required>
+          <option value="">Selecciona els estudis</option>
+        </select>
+      </label>
+
+      <label>NIA
+        <input id="newNia" type="text" required>
+      </label>
+
+      <label>Matrícula
+        <input id="newCar" type="text" required>
+      </label>
+
+      <label>Contrasenya
+        <input id="newPassword" type="password" minlength="8" required>
+      </label>
+
+      <label>Rol
+        <select id="newRole">
+          <option value="User">Usuari</option>
+          <option value="Admin">Administrador</option>
+        </select>
+      </label>
+
+      <label class="check">
+        <input id="newUserActive" type="checkbox" checked>
+        Actiu
+      </label>
+
+      <p class="message" id="userModalMessage" role="status"></p>
+
+      <div class="modal-actions">
+        <button class="button button--secondary" id="cancelUserModal" type="button">
+          Cancel·lar
+        </button>
+        <button class="button button--primary" type="submit">Crear usuari</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="../../js/dash_admin.js"></script>
+  <script type="module" src="../../js/admin/users.js"></script>
+</body>
+</html>

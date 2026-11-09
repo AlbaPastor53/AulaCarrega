@@ -1,0 +1,53 @@
+<!--
+  PÀGINA: pages/dashboard.html
+  RESPONSABILITAT:
+    Tauler principal de l'usuari autenticat.
+
+  ENDPOINTS:
+    GET /api/auth/me
+    GET /api/charging-schedules/me
+    GET /api/holidays
+
+  A TENIR EN COMPTE:
+    - Mostrar el nom de l'usuari, el rol i les penalitzacions.
+    - Targetes resum: proper torn, estat del carregador i avisos.
+    - Si l'usuari és Admin, mostrar un enllaç a pages/admin/users.html.
+    - Gestionar estats: carregant, sense dades i error.
+    - Reutilitzar css/dashboard.css.
+-->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usuari · AulaCarrega</title>
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="dash_user.html">
+      <span class="brand-icon" aria-hidden="true">ϟ</span>
+      <span>
+        <strong>aulacarrega</strong>
+        <small>PANEL D'ADMINISTRACIÓ</small>
+      </span>
+    </a>
+
+    <nav class="navigation" aria-label="Navegación principal">
+      <p class="nav-heading">Menú</p>
+      <a class="nav-item active" href="dash_user.html" aria-current="page">
+        <span class="nav-icon" aria-hidden="true">▦</span>
+        Vista general
+      </a>
+      <a class="nav-item" href="chargers.html">
+        <span class="nav-icon" aria-hidden="true">ϟ</span>
+        Punts de càrrega
+      </a>
+      <a class="nav-item" href="schedules.html">
+        <span class="nav-icon" aria-hidden="true">⏱</span>
+        El meu horari
+      </a>
+    </nav>
+  </aside>
+</body>

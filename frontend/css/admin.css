@@ -1,0 +1,50 @@
+/* Estils exclusius del dashboard d'administració */
+.admin-body { min-height: 100vh; background: #f3f7f6; color: #17332e; color-scheme: light; }
+.admin-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
+.admin-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; padding: 28px 18px; background: #082b25; color: #eaf5f1; }
+.admin-brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 34px; color: white; font-size: 19px; }
+.admin-brand > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 9px; background: #174f43; }
+.admin-brand strong span { color: #79d8bd; }
+.sidebar-label, .admin-kicker { margin: 0 0 10px; color: #72988d; font-size: 10px; font-weight: 700; letter-spacing: 1.3px; }
+.sidebar-label { padding: 0 10px; }
+.admin-nav { display: grid; gap: 7px; }
+.admin-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 13px; border-radius: 8px; color: #b9d0c9; font-size: 13px; }
+.admin-nav a:hover, .admin-nav a.active { background: #17483e; color: #fff; text-decoration: none; }
+.logout-button { margin-top: auto; padding: 12px; border: 1px solid #31574e; border-radius: 8px; background: transparent; color: #d5e7e1; cursor: pointer; text-align: left; }
+.admin-main { width: min(1200px, 100%); margin: 0 auto; padding: 34px 42px 55px; }
+.admin-header, .section-heading, .admin-profile { display: flex; align-items: center; justify-content: space-between; }
+.admin-header { margin-bottom: 28px; }
+.admin-header h1 { margin: 0; color: #143b32; font-size: 29px; font-weight: 700; letter-spacing: -.7px; }
+.admin-profile { gap: 10px; color: #42645a; font-size: 13px; }
+.profile-dot { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #d7eee6; color: #17624e; font-weight: 700; }
+.welcome { display: flex; justify-content: space-between; align-items: center; padding: 26px 30px; border-radius: 13px; background: linear-gradient(110deg,#0d493c,#17634f); color: white; }
+.welcome .admin-kicker { color: #a2d7c7; }
+.welcome h2 { margin: 0 0 8px; font-size: 21px; }
+.welcome p:last-child { margin: 0; color: #c4e2d8; font-size: 13px; }
+.welcome-icon { font-size: 42px; opacity: .85; }
+.stat-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 17px; margin: 22px 0; }
+.stat-card, .admin-section { border: 1px solid #e0eae6; border-radius: 12px; background: #fff; }
+.stat-card { position: relative; padding: 20px; }
+.stat-icon { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 9px; background: #e7f5ef; color: #187458; }
+.stat-card p { margin: 15px 0 5px; color: #627970; font-size: 12px; }
+.stat-card strong { display: block; color: #143b32; font-size: 29px; }
+.stat-card small { color: #91a39d; font-size: 11px; }
+.admin-section { margin-top: 18px; padding: 22px; }
+.section-heading { margin-bottom: 18px; }
+.section-heading h2 { margin: 0; color: #173d33; font-size: 17px; }
+.section-heading .admin-kicker { margin-bottom: 6px; }
+.table-note { color: #84968f; font-size: 11px; }
+.course-stats { display: grid; gap: 15px; }
+.course-row { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(100px, 2fr) 35px; align-items: center; gap: 15px; color: #526c62; font-size: 12px; }
+.course-row strong { text-align: right; color: #1b4e40; }
+.course-bar { height: 8px; overflow: hidden; border-radius: 20px; background: #edf3f0; }
+.course-bar span { display: block; height: 100%; border-radius: inherit; background: #2b9475; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+th { padding: 11px 12px; background: #f5f8f7; color: #70847c; font-size: 10px; letter-spacing: .6px; text-transform: uppercase; }
+td { padding: 13px 12px; border-bottom: 1px solid #edf1ef; color: #425e54; font-size: 12px; }
+.admin-message { margin-top: 16px; font-size: 13px; }
+.admin-message.is-error { color: #b42318; }
+.empty-state { color: #8a9c95; font-size: 13px; }
+@media (max-width: 850px) { .admin-layout { grid-template-columns: 1fr; } .admin-sidebar { position: static; height: auto; } .admin-nav { grid-template-columns: repeat(3,1fr); } .logout-button { margin-top: 18px; } .admin-main { padding: 25px 18px; } }
+@media (max-width: 560px) { .stat-grid { grid-template-columns: 1fr; } .admin-header { align-items: flex-start; gap: 12px; } .admin-profile { font-size: 11px; } .welcome { padding: 22px; } .welcome-icon { display: none; } .course-row { grid-template-columns: 1fr 1fr 25px; } }

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sessió · aulacarrega</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <main class="auth">
+    <aside class="hero" aria-label="mobilitat elèctrica a l'institut">
+      <div class="brand">
+        <span class="brand__icon" aria-hidden="true">⚡</span>
+        <div>
+          <span class="brand__name">aulacarrega</span>
+          <span class="brand__tagline">MOBILITAT QUE EDUCA</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow">UN INSTITUT MÉS SOSTENIBLE</p>
+        <h2>El teu futur es mou amb energia neta.</h2>
+        <p class="hero__description">
+          Connecta el teu cotxe. La mobilitat elèctrica comença al teu institut.
+        </p>
+        <div class="hero__features">
+          <span>Càrrega connectada</span>
+          <span>Comunitat educativa</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel" aria-labelledby="login-title">
+      <p class="help"> Necessites ajuda?<a href="/contacto">Contacta amb el centre</a></p>
+
+      <div class="content">
+        <div class="brand brand--form">
+          <span class="brand__icon" aria-hidden="true">⚡</span>
+          <span class="brand__name">aula<span>carrega</span></span>
+        </div>
+
+        <h1 id="login-title">Benvingut de nou</h1>
+        <p class="subtitle">La teua pròxima recàrrega comença ací.</p>
+
+        <form id="loginForm" novalidate>
+          <div class="field">
+            <label for="identity">NIA: </label>
+            <input id="identity" name="identity" type="text" placeholder="Introdueix el NIA"
+              required>
+          </div>
+
+          <div class="field">
+            <label for="car">Matrícula:</label>
+            <input id="car" name="car" type="text" placeholder="Introdueix la matrícula del vehicle"
+              autocomplete="off" required>
+          </div>
+
+          <div class="field">
+            <label for="password">Contrasenya:</label>
+            <input id="password" name="password" type="password"
+              placeholder="Introdueix la teua contrasenya" required>
+          </div>
+
+          <button class="primary" type="submit"> Iniciar sessió <span aria-hidden="true">→</span></button>
+        </form>
+
+        <div id="loginMessage" style="margin-top: 16px; text-align: center; font-size: 13px;"></div>
+
+        <p class="switch"> No tens compte?<a href="register.html">Registra't ací</a></p>
+
+        <div class="info">
+          <span aria-hidden="true">ⓘ</span>
+          <p> Accedeix amb el compte vinculat al teu institut per a gestionar els teus punts de càrrega.</p>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <span>© 2026 aulacarrega</span>
+        <nav aria-label="Enllaços d'ajuda">
+          <a href="#">Privacitat</a>
+          <a href="#">Ajuda</a>
+        </nav>
+      </footer>
+    </section>
+  </main>
+  <script src="../js/login.js"></script>
+</body>
+</html>
