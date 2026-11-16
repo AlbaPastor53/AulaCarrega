@@ -9,6 +9,7 @@
     GET /api/holidays
 */
 import { ApiService } from "./api.js";
+import { escapeHtml } from "./utils.js";
 
 // Estats possibles d'un torn de càrrega.
 const STATUS = {
@@ -24,19 +25,6 @@ const HOLIDAY_TYPE = {
   Holiday: 'Festiu',
   Vacation: 'Vacances',
   NonSchoolDay: 'Dia no lectiu'
-};
-
-// Converteix caràcters especials per poder mostrar-los sense problemes.
-const escapeHtml = (value) => {
-  const symbols = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  };
-
-  return String(value ?? '').replace(/[&<>"']/g, (char) => symbols[char]);
 };
 
 const toDate = (value) => {

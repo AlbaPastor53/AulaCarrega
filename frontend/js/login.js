@@ -1,20 +1,23 @@
 const loginForm = document.getElementById('loginForm');
 const loginMessage = document.getElementById('loginMessage');
 
+const showMessage = (text, color = '#f87171') => {
+  loginMessage.textContent = text;
+  loginMessage.style.color = text ? color : '';
+};
+
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    loginMessage.textContent = '';
-    loginMessage.style.color = '';
+    showMessage('');
 
     const identity = document.getElementById('identity').value.trim();
     const car = document.getElementById('car').value.trim();
     const password = document.getElementById('password').value;
 
     if (!identity || !car || !password) {
-      loginMessage.textContent = 'Introdueix el NIA, la matrícula i la contrasenya';
-      loginMessage.style.color = '#f87171';
+      showMessage('Introdueix el NIA, la matrícula i la contrasenya');
       return;
     }
 
@@ -30,13 +33,11 @@ if (loginForm) {
       const data = await res.json();
 
       if (!res.ok) {
-        loginMessage.textContent = data.message || 'Error d\'inici de sessió';
-        loginMessage.style.color = '#f87171';
+        showMessage(data.message || 'Error d\'inici de sessió');
         return;
       }
 
-      loginMessage.textContent = 'Inici de sessió correcte';
-      loginMessage.style.color = '#34d399';
+      showMessage('Inici de sessió correcte', '#34d399');
 
       // Guardamos el token y el usuario para poder usar las rutas protegidas.
       if (data.token) {
@@ -47,17 +48,15 @@ if (loginForm) {
         localStorage.setItem('aulacarregaUser', JSON.stringify(data.user));
       }
 
-      // Los administradores entran directamente al panel.
+     
       if (data.user.role === 'Admin') {
         window.location.href = 'dash_admin.html';
       } else {
-        // Los usuarios normales entran al dashboard.
         window.location.href = 'dash_user.html';
       }
     } catch (error) {
       console.error(error);
-      loginMessage.textContent = 'Error de connexió amb el servidor';
-      loginMessage.style.color = '#f87171';
+      showMessage('Error de connexió amb el servidor');
     }
   });
 }

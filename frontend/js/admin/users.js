@@ -1,4 +1,5 @@
 import { ApiService } from "../api.js";
+import { escapeHtml } from "../utils.js";
 
 let users = [];
 let scheduleUserId = null;
@@ -29,11 +30,6 @@ const ESTUDIS = {
     'Administració i Finances (presencial)',
     'Transport i Logística (presencial)'
   ]
-};
-
-const escapeHtml = (value) => {
-  const symbols = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(value ?? '').replace(/[&<>"']/g, (char) => symbols[char]);
 };
 
 const showMessage = (text, ok = true) => {

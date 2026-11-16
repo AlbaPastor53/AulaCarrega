@@ -1,4 +1,5 @@
 import { ApiService } from "./api.js";
+import { escapeHtml } from "./utils.js";
 
 const STATUS = {
   Available: { label: 'Operatiu', badge: 'badge--success' },
@@ -10,19 +11,6 @@ let chargers = [];
 
 const user = JSON.parse(localStorage.getItem('aulacarregaUser') || 'null');
 const isAdmin = user && user.role === 'Admin';
-
-// Converteix caràcters especials per poder mostrar-los sense problemes a la taula.
-const escapeHtml = (value) => {
-  const symbols = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  };
-
-  return String(value ?? '').replace(/[&<>"']/g, (char) => symbols[char]);
-};
 
 const showMessage = (text, ok = true) => {
   const message = document.getElementById('message');
@@ -63,29 +51,25 @@ const render = () => {
 
   document.getElementById('chargersTable').innerHTML = visibleChargers.map((charger) => {
     const statusInfo = STATUS[charger.status] || STATUS.Available;
+    const statusOptions = Object.keys(STATUS)
+      .map((value) => `<option value="${value}" ${value === charger.status ? 'selected' : ''}>${STATUS[value].label}</option>`)
+      .join('');
 
-    let actions = 'Només consulta';
+    const actions = isAdmin
+      ? `
+        <select data-action="status" data-id="${charger._id}">
+          ${statusOptions}
+        </select>
 
-if (isAdmin) {
-  const options = Object.keys(STATUS).map((value) => {
-    const selected = value === charger.status ? 'selected' : '';
-    return `<option value="${value}" ${selected}>${STATUS[value].label}</option>`;
-  }).join('');
+        <button class="btn btn--secondary btn--sm" data-action="toggle" data-id="${charger._id}">
+          ${charger.isActive ? 'Desactivar' : 'Activar'}
+        </button>
 
-    actions = `
-      <select data-action="status" data-id="${charger._id}">
-        ${options}
-      </select>
-
-      <button class="btn btn--secondary btn--sm" data-action="toggle" data-id="${charger._id}">
-        ${charger.isActive ? 'Desactivar' : 'Activar'}
-      </button>
-
-      <button class="btn btn--secondary btn--sm" data-action="delete" data-id="${charger._id}">
-        Eliminar
-      </button>
-    `;
-  }
+        <button class="btn btn--secondary btn--sm" data-action="delete" data-id="${charger._id}">
+          Eliminar
+        </button>
+      `
+      : 'Només consulta';
 
     return `
       <tr>
@@ -125,15 +109,12 @@ const loadChargers = async () => {
 };
 
 const init = () => {
-  // Els usuaris normals no poden crear carregadors.
-  if (!isAdmin) {
-    document.getElementById('openChargerModal').hidden = true;
-  }
-   // Accions disponibles només per a administradors.
-  if (isAdmin) {
+  const openChargerModal = document.getElementById('openChargerModal');
 
+  // Les accions de gestió només estan disponibles per a administradors.
+  if (isAdmin) {
     // Obrir la finestra de creació.
-    document.getElementById('openChargerModal').addEventListener('click', () => {
+    openChargerModal.addEventListener('click', () => {
       document.getElementById('chargerForm').reset();
       showChargerModalMessage('');
       document.getElementById('chargerModal').showModal();
@@ -219,7 +200,8 @@ const init = () => {
         showMessage(error.message, false);
       }
     });
-
+  } else {
+    openChargerModal.hidden = true;
   }
 
   document.getElementById('refresh').addEventListener('click', loadChargers);

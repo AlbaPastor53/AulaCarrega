@@ -10,9 +10,7 @@ const timeToMinutes = (value) => {
 };
 
 // Comprova que una data es pot convertir correctament
-const isValidDate = (value) => {
-  return value !== undefined && value !== null && !Number.isNaN(new Date(value).getTime());
-};
+const isValidDate = (value) => value != null && !Number.isNaN(new Date(value).getTime());
 
 // Retorna només el dia (00:00) per guardar dates sense hora
 const startOfDay = (value) => {

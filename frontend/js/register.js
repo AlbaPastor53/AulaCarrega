@@ -38,22 +38,13 @@ course.addEventListener("change", function () {
     // Borrem les opcions anteriors
     estudis.innerHTML = '<option value="">Selecciona els estudis</option>';
 
-    // Guardem el tipus seleccionat
-    const tipusSeleccionat = course.value;
-
     // Afegim les opcions corresponents
-    if (opcions[tipusSeleccionat]) {
-
-        for (let i = 0; i < opcions[tipusSeleccionat].length; i++) {
-
-            const opcio = document.createElement("option");
-
-            opcio.value = opcions[tipusSeleccionat][i];
-            opcio.textContent = opcions[tipusSeleccionat][i];
-
-            estudis.appendChild(opcio);
-        }
-    }
+    (opcions[course.value] || []).forEach(function (nom) {
+        const opcio = document.createElement("option");
+        opcio.value = nom;
+        opcio.textContent = nom;
+        estudis.appendChild(opcio);
+    });
 });
 
 
@@ -74,25 +65,25 @@ registerForm.addEventListener("submit", async function (e) {
     const terms = document.querySelector('input[name="terms"]').checked;
 
 
-    // Comprovem els termes
+    // Comprovem 
     if (!terms) {
         registerMessage.textContent = "Has d'acceptar els termes d'ús";
         return;
     }
 
-    // Comprovem les contrasenyes
+  
     if (password !== confirmPassword) {
         registerMessage.textContent = "Les contrasenyes no coincideixen";
         return;
     }
+   
 
-    // Comprovem que s'hagin seleccionat els estudis concrets
     if (!estudis.value) {
         registerMessage.textContent = "Selecciona els estudis concrets";
         return;
     }
 
-    // Comprovem la matrícula
+    
     if (!car.trim()) {
         registerMessage.textContent = "Introdueix la matrícula del vehicle";
         return;
@@ -105,15 +96,15 @@ registerForm.addEventListener("submit", async function (e) {
             method: "POST",
             headers: { "Content-Type": "application/json"},
             body: JSON.stringify({
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
+                firstName,
+                lastName,
+                email,
                 course: course.value,
                 estudis: estudis.value,
-                nia: nia,
-                car: car,
-                password: password,
-                confirmPassword: confirmPassword
+                nia,
+                car,
+                password,
+                confirmPassword
             })
         });
 

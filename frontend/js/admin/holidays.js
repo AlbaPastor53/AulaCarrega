@@ -1,4 +1,5 @@
 import { ApiService } from "../api.js";
+import { escapeHtml } from "../utils.js";
 
 const tableBody = document.getElementById('holidaysTable');
 const message = document.getElementById('message');
@@ -11,14 +12,6 @@ const showMessage = (text, ok = true) => {
   message.textContent = text;
   message.classList.toggle('is-error', !ok);
 };
-
-const escapeHtml = (value) => {
-  const symbols = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(value ?? '').replace(/[&<>"']/g, (char) => symbols[char]);
-};
-
-const getStart = (h) => h.start_date || h.startDate || h.start || h.from;
-const getEnd = (h) => h.end_date || h.endDate || h.end || h.to;
 
 const toDateInput = (value) => {
   if (!value) return '';
@@ -40,7 +33,6 @@ const formatDate = (value) => {
 const resetForm = () => {
   editingId = null;
   form.reset();
-  document.getElementById('holidayId').value = '';
   document.getElementById('endDate').min = '';
   document.getElementById('formTitle').textContent = 'Afegir dia / període';
   document.getElementById('submitBtn').textContent = 'Afegir';
@@ -48,15 +40,12 @@ const resetForm = () => {
 };
 
 const startEdit = (holiday) => {
-  editingId = holiday._id || holiday.id;
-  document.getElementById('holidayId').value = editingId || '';
+  editingId = holiday._id;
   document.getElementById('name').value = holiday.name || '';
   document.getElementById('type').value = holiday.type || 'Holiday';
-  const start = getStart(holiday);
-  const end = getEnd(holiday);
-  document.getElementById('startDate').value = toDateInput(start);
-  document.getElementById('endDate').value = toDateInput(end);
-  document.getElementById('endDate').min = toDateInput(start);
+  document.getElementById('startDate').value = toDateInput(holiday.start_date);
+  document.getElementById('endDate').value = toDateInput(holiday.end_date);
+  document.getElementById('endDate').min = toDateInput(holiday.start_date);
   document.getElementById('description').value = holiday.description || '';
   document.getElementById('formTitle').textContent = 'Editar període';
   document.getElementById('submitBtn').textContent = 'Desar canvis';
@@ -70,31 +59,28 @@ const renderHolidays = (data) => {
     return;
   }
 
-  tableBody.innerHTML = data.map((h) => {
-    const id = h._id || h.id || '';
-    return `
+  tableBody.innerHTML = data.map((holiday) => `
     <tr>
-      <td>${escapeHtml(h.name)}</td>
-      <td>${escapeHtml(h.type)}</td>
-      <td>${escapeHtml(formatDate(getStart(h)))}</td>
-      <td>${escapeHtml(formatDate(getEnd(h)))}</td>
-      <td>${escapeHtml(h.description)}</td>
+      <td>${escapeHtml(holiday.name)}</td>
+      <td>${escapeHtml(holiday.type)}</td>
+      <td>${escapeHtml(formatDate(holiday.start_date))}</td>
+      <td>${escapeHtml(formatDate(holiday.end_date))}</td>
+      <td>${escapeHtml(holiday.description)}</td>
       <td>
         <div class="actions">
-          <button class="btn btn--secondary btn--sm" data-action="edit" data-id="${escapeHtml(id)}">Editar</button>
-          <button class="btn btn--secondary btn--sm" data-action="delete" data-id="${escapeHtml(id)}">Eliminar</button>
+          <button class="btn btn--secondary btn--sm" data-action="edit" data-id="${escapeHtml(holiday._id)}">Editar</button>
+          <button class="btn btn--secondary btn--sm" data-action="delete" data-id="${escapeHtml(holiday._id)}">Eliminar</button>
         </div>
       </td>
     </tr>
-  `;
-  }).join('');
+  `).join('');
 };
 
 const loadHolidays = async () => {
   try {
     document.getElementById('lastUpdated').textContent = 'Carregant…';
     const result = await ApiService.api('/holidays?limit=200');
-    holidays = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+    holidays = result.data || [];
     renderHolidays(holidays);
     document.getElementById('lastUpdated').textContent = `Actualitzat a les ${new Date().toLocaleTimeString('ca-ES')}`;
   } catch (error) {
@@ -147,7 +133,7 @@ const init = () => {
   tableBody.addEventListener('click', async (event) => {
     const btn = event.target.closest('button[data-action]');
     if (!btn) return;
-    const holiday = holidays.find((h) => (h._id || h.id) === btn.dataset.id);
+    const holiday = holidays.find((item) => item._id === btn.dataset.id);
 
     if (btn.dataset.action === 'edit' && holiday) {
       startEdit(holiday);
@@ -172,8 +158,4 @@ const init = () => {
 
 if (window.adminReady) {
   init();
-} else {
-  window.addEventListener('load', () => {
-    if (window.adminReady) init();
-  });
 }

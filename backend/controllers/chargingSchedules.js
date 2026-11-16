@@ -15,6 +15,8 @@ const POPULATE = [
 
 const STATUS = ['Pending', 'InProgress', 'Completed', 'Cancelled', 'NotUsed'];
 
+const roundHours = (value) => Math.round(value * 100) / 100;
+
 // Construeix el filtre a partir dels paràmetres de la URL
 const buildFilter = (query) => {
   const filter = {};
@@ -38,14 +40,15 @@ const buildFilter = (query) => {
 const listSchedules = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
+    const filter = buildFilter(req.query);
 
     const [data, total] = await Promise.all([
-      ChargingSchedule.find(buildFilter(req.query))
+      ChargingSchedule.find(filter)
         .populate(POPULATE)
         .sort({ date: 1, start_time: 1 })
         .skip(skip)
         .limit(limit),
-      ChargingSchedule.countDocuments(buildFilter(req.query))
+      ChargingSchedule.countDocuments(filter)
     ]);
 
     return res.json({ data, total, page, limit });
@@ -82,6 +85,17 @@ const getSchedule = async (req, res, next) => {
   }
 };
 
+// Busca un torn que se solape amb el dia i l'horari indicats.
+const findOverlap = (field, value, date, startTime, endTime) => {
+  return ChargingSchedule.findOne({
+    [field]: value,
+    date: startOfDay(date),
+    status: { $ne: 'Cancelled' },
+    start_time: { $lt: endTime },
+    end_time: { $gt: startTime }
+  });
+};
+
 // POST /api/charging-schedules (Admin)
 const createSchedule = async (req, res, next) => {
   try {
@@ -108,37 +122,24 @@ const createSchedule = async (req, res, next) => {
       return res.status(400).json({ message: 'assigned_hours ha de ser més gran que 0' });
     }
 
-    const userExists = await User.findById(user_id);
+    const [userExists, chargerExists, chargerOverlap, userOverlap] = await Promise.all([
+      User.findById(user_id),
+      Charger.findById(charger),
+      findOverlap('charger', charger, date, start_time, end_time),
+      findOverlap('user_id', user_id, date, start_time, end_time)
+    ]);
+
     if (!userExists) {
       return res.status(400).json({ message: 'Usuari no trobat' });
     }
 
-    const chargerExists = await Charger.findById(charger);
     if (!chargerExists) {
       return res.status(400).json({ message: 'Carregador no trobat' });
     }
 
-    // No poden haver-hi dos torns al mateix carregador a la mateixa hora
-    const chargerOverlap = await ChargingSchedule.findOne({
-      charger,
-      date: startOfDay(date),
-      status: { $ne: 'Cancelled' },
-      start_time: { $lt: end_time },
-      end_time: { $gt: start_time }
-    });
-
     if (chargerOverlap) {
       return res.status(400).json({ message: 'El carregador ja té un altre torn en aquest horari' });
     }
-
-    // Ni dos torns del mateix usuari a la mateixa hora
-    const userOverlap = await ChargingSchedule.findOne({
-      user_id,
-      date: startOfDay(date),
-      status: { $ne: 'Cancelled' },
-      start_time: { $lt: end_time },
-      end_time: { $gt: start_time }
-    });
 
     if (userOverlap) {
       return res.status(400).json({ message: "L'usuari ja té un altre torn en aquest horari" });
@@ -163,8 +164,8 @@ const createSchedule = async (req, res, next) => {
 const getActualHours = (schedule) => {
   if (schedule.connection_time && schedule.disconnection_time) {
     const ms = new Date(schedule.disconnection_time) - new Date(schedule.connection_time);
-    const hours = Math.round((ms / 3600000) * 100) / 100;
-    if (hours >= 0) return hours;
+    const hours = ms / 3600000;
+    if (hours >= 0) return roundHours(hours);
   }
   return Number(schedule.assigned_hours) || 0;
 };
@@ -202,7 +203,7 @@ const syncCompletion = async (schedule) => {
   ]);
 
   const total = result[0]?.total || 0;
-  await User.findByIdAndUpdate(schedule.user_id, { total_hours: Math.round(total * 100) / 100 });
+  await User.findByIdAndUpdate(schedule.user_id, { total_hours: roundHours(total) });
 };
 
 // PATCH /api/charging-schedules/:id (Admin)
@@ -220,14 +221,14 @@ const updateSchedule = async (req, res, next) => {
       return res.status(400).json({ message: 'Estat no vàlid' });
     }
 
+    const current = await ChargingSchedule.findById(req.params.id);
+
+    if (!current) {
+      return res.status(404).json({ message: 'Torn no trobat' });
+    }
+
     // Un torn acabat ha de tenir hora de connexió i de desconnexió
     if (changes.status === 'Completed') {
-      const current = await ChargingSchedule.findById(req.params.id);
-
-      if (!current) {
-        return res.status(404).json({ message: 'Torn no trobat' });
-      }
-
       const connection = changes.connection_time || current.connection_time;
       const disconnection = changes.disconnection_time || current.disconnection_time;
 
@@ -249,6 +250,11 @@ const updateSchedule = async (req, res, next) => {
 
     if (schedule.status === 'Completed') {
       await syncCompletion(schedule);
+    }
+
+    // Si el torn passa a no utilitzat, l'alumne rep una penalització.
+    if (schedule.status === 'NotUsed' && current.status !== 'NotUsed') {
+      await User.findByIdAndUpdate(schedule.user_id, { $inc: { penalties: 1 } });
     }
 
     await schedule.populate(POPULATE);
@@ -290,13 +296,9 @@ const disconnectSchedule = async (req, res, next) => {
       return res.status(400).json({ message: 'El torn encara no s\'ha connectat' });
     }
 
-    const disconnection = new Date();
-    const milliseconds = disconnection - schedule.connection_time;
-    const actualHours = Math.round((milliseconds / 3600000) * 100) / 100;
-
     schedule.status = 'Completed';
-    schedule.disconnection_time = disconnection;
-    schedule.actual_hours = actualHours;
+    schedule.disconnection_time = new Date();
+    schedule.actual_hours = getActualHours(schedule);
     await schedule.save();
     await syncCompletion(schedule);
     await schedule.populate(POPULATE);

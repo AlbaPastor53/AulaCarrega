@@ -11,7 +11,7 @@
     - Les funcions són pures: no consulten la base de dades.
 */
 
-const { startOfDay } = require('./dates');
+const { startOfDay, timeToMinutes } = require('./dates');
 
 const DAY_NAMES = [
   'Diumenge', 'Dilluns', 'Dimarts', 'Dimecres',
@@ -21,11 +21,8 @@ const DAY_NAMES = [
 // Cada quants minuts es prova una nova hora d'inici.
 const STEP_MINUTES = 30;
 
-// "08:30" -> 510 minuts
-const toMinutes = (time) => {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-};
+// Dues dates corresponen al mateix dia?
+const sameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
 
 // 510 minuts -> "08:30"
 const toTime = (minutes) => {
@@ -68,8 +65,8 @@ const getPresenceWindow = (classSchedule, date) => {
   const classes = getClasses(classSchedule, date);
   if (classes.length === 0) return null;
 
-  const starts = classes.map((block) => toMinutes(block.start));
-  const ends = classes.map((block) => toMinutes(block.end));
+  const starts = classes.map((block) => timeToMinutes(block.start));
+  const ends = classes.map((block) => timeToMinutes(block.end));
 
   return {
     start: Math.min(...starts),
@@ -102,14 +99,12 @@ const getPossibleStarts = (classSchedule, date, duration) => {
 
 // El carregador ja té un altre torn que se solapa?
 const isChargerFree = (shifts, chargerId, date, startTime, endTime) => {
-  const busy = shifts.some((shift) => {
+  return !shifts.some((shift) => {
     return String(shift.charger) === String(chargerId)
-      && startOfDay(shift.date).getTime() === date.getTime()
+      && sameDay(shift.date, date)
       && shift.start_time < endTime
       && shift.end_time > startTime;
   });
-
-  return !busy;
 };
 
 // Busca la primera franja lliure per a l'alumne
@@ -135,8 +130,7 @@ const findFreeSlot = ({ chargers, shifts, classSchedule, date, duration }) => {
 // L'alumne ja té un torn aquest dia?
 const hasShiftThatDay = (shifts, userId, date) => {
   return shifts.some((shift) => {
-    return String(shift.user_id) === String(userId)
-      && startOfDay(shift.date).getTime() === date.getTime();
+    return String(shift.user_id) === String(userId) && sameDay(shift.date, date);
   });
 };
 

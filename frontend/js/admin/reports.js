@@ -1,13 +1,9 @@
 import { ApiService } from "../api.js";
+import { escapeHtml } from "../utils.js";
 
 let users = [];
 let chargers = [];
 let history = [];
-
-const escapeHtml = (value) => {
-  const symbols = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(value ?? '').replace(/[&<>"']/g, (char) => symbols[char]);
-};
 
 const showMessage = (text, ok = true) => {
   const message = document.getElementById('message');
@@ -16,23 +12,6 @@ const showMessage = (text, ok = true) => {
 };
 
 const fullName = (user) => `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Alumne';
-
-const loadAllPages = async (path) => {
-  const items = [];
-  let page = 1;
-  let total = 1;
-
-  while (items.length < total && page <= 20) {
-    const result = await ApiService.api(`${path}${path.includes('?') ? '&' : '?'}limit=100&page=${page}`);
-    const data = Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []);
-    if (data.length === 0) break;
-    items.push(...data);
-    total = Number(result.total) || items.length;
-    page += 1;
-  }
-
-  return items;
-};
 
 // 1. Alumnes per estudis
 const renderEstudisFilter = () => {
@@ -101,19 +80,17 @@ const renderTopHours = () => {
   const hoursByUser = new Map();
 
   history.forEach((h) => {
-    const user = h.user;
-    const id = String(user?._id || user || '');
+    const id = String(h.user?._id || h.user || '');
     if (!id) return;
-    const found = users.find((u) => (u._id || u.id) === id);
-    const name = user?.firstName ? fullName(user) : (found ? fullName(found) : 'Alumne');
-    if (!hoursByUser.has(id)) hoursByUser.set(id, { name, hours: 0 });
-    hoursByUser.get(id).hours += Number(h.actual_hours) || 0;
+
+    const found = users.find((user) => user._id === id);
+    const name = h.user?.firstName ? fullName(h.user) : (found ? fullName(found) : 'Alumne');
+    const current = hoursByUser.get(id) || { name, hours: 0 };
+    current.hours += Number(h.actual_hours) || 0;
+    hoursByUser.set(id, current);
   });
 
-  let top = null;
-  hoursByUser.forEach((value) => {
-    if (!top || value.hours > top.hours) top = value;
-  });
+  const top = Array.from(hoursByUser.values()).sort((a, b) => b.hours - a.hours)[0];
 
   if (!top) {
     nameEl.textContent = '—';
@@ -129,13 +106,14 @@ const renderTopHours = () => {
 const renderTopPenalties = () => {
   const nameEl = document.getElementById('topPenaltiesUserName');
   const valueEl = document.getElementById('topPenaltiesUserValue');
-  const students = users.filter((u) => u.role === 'User');
-
-  let top = null;
-  students.forEach((u) => {
-    const p = Number(u.penalties) || 0;
-    if (!top || p > top.penalties) top = { name: fullName(u), penalties: p };
-  });
+  const top = users
+    .filter((user) => user.role === 'User')
+    .reduce((best, user) => {
+      const penalties = Number(user.penalties) || 0;
+      return !best || penalties > best.penalties
+        ? { name: fullName(user), penalties }
+        : best;
+    }, null);
 
   if (!top) {
     nameEl.textContent = '—';
@@ -161,9 +139,9 @@ const loadReports = async () => {
     showMessage('');
 
     const [usersData, chargersData, historyData] = await Promise.all([
-      loadAllPages('/users'),
-      loadAllPages('/chargers'),
-      loadAllPages('/charging-history')
+      ApiService.all('/users'),
+      ApiService.all('/chargers'),
+      ApiService.all('/charging-history')
     ]);
 
     users = usersData;
@@ -185,8 +163,4 @@ const init = () => {
 
 if (window.adminReady) {
   init();
-} else {
-  window.addEventListener('load', () => {
-    if (window.adminReady) init();
-  });
 }

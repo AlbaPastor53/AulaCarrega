@@ -45,4 +45,21 @@ export class ApiService {
 
     return data;
   }
+
+  // Carrega totes les pàgines d'un llistat.
+  static async all(path, maxPages = 20) {
+    const items = [];
+    const separator = path.includes('?') ? '&' : '?';
+
+    for (let page = 1; page <= maxPages; page += 1) {
+      const result = await this.api(`${path}${separator}limit=100&page=${page}`);
+      const data = Array.isArray(result.data) ? result.data : [];
+      if (data.length === 0) break;
+
+      items.push(...data);
+      if (items.length >= (Number(result.total) || items.length)) break;
+    }
+
+    return items;
+  }
 }

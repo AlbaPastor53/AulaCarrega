@@ -1,14 +1,8 @@
 import { ApiService } from "../api.js";
+import { escapeHtml } from "../utils.js";
 
 // Dies lectius (una pàgina per dia)
 const DAY_LABELS = ['Dilluns', 'Dimarts', 'Dimecres', 'Dijous', 'Divendres'];
-const PAGES = [
-  { offsets: [0] },
-  { offsets: [1] },
-  { offsets: [2] },
-  { offsets: [3] },
-  { offsets: [4] }
-];
 
 // Franja visible del calendari (minuts)
 const CAL_START = 8 * 60;
@@ -44,11 +38,6 @@ const showMessage = (text, ok = true) => {
 const handleLoadError = (error) => {
   showMessage(error.message, false);
   weekCalendar.innerHTML = '<p class="empty-state">No s\'han pogut carregar els torns.</p>';
-};
-
-const escapeHtml = (value) => {
-  const symbols = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(value ?? '').replace(/[&<>"']/g, (char) => symbols[char]);
 };
 
 const formatDate = (date) => {
@@ -226,12 +215,10 @@ const renderChargerLegend = (shifts) => {
 const renderCalendar = () => {
   if (!currentMonday) return;
   const todayKey = formatDate(new Date());
-  const page = PAGES[currentPage] || PAGES[0];
-  const days = page.offsets.map((offset) => {
-    const date = new Date(currentMonday);
-    date.setDate(currentMonday.getDate() + offset);
-    return { date, label: DAY_LABELS[offset] };
-  });
+  const dayIndex = currentPage >= 0 && currentPage < DAY_LABELS.length ? currentPage : 0;
+  const date = new Date(currentMonday);
+  date.setDate(currentMonday.getDate() + dayIndex);
+  const days = [{ date, label: DAY_LABELS[dayIndex] }];
 
   weekCalendar.style.setProperty('--day-count', String(days.length));
   weekCalendar.classList.toggle('week-calendar--single', days.length === 1);
@@ -281,27 +268,12 @@ const renderCalendar = () => {
     `${currentShifts.length} ${currentShifts.length === 1 ? 'torn' : 'torns'}`;
 };
 
-const loadShifts = async (from, to) => {
-  const shifts = [];
-  let page = 1;
-  let total = 1;
-
-  while (shifts.length < total && page <= 20) {
-    const result = await ApiService.api(`/charging-schedules?from=${from}&to=${to}&limit=100&page=${page}`);
-    const data = Array.isArray(result.data) ? result.data : [];
-    if (data.length === 0) break;
-    shifts.push(...data);
-    total = Number(result.total) || shifts.length;
-    page += 1;
-  }
-
-  return shifts;
-};
-
 const loadWeek = async () => {
   const { monday, friday } = getWeekRange();
   currentMonday = monday;
-  currentShifts = await loadShifts(formatDate(monday), formatDate(friday));
+  currentShifts = await ApiService.all(
+    `/charging-schedules?from=${formatDate(monday)}&to=${formatDate(friday)}`
+  );
   renderCalendar();
   document.getElementById('lastUpdated').textContent =
     `Actualitzat a les ${new Date().toLocaleTimeString('ca-ES')}`;
@@ -316,7 +288,7 @@ const moveWeek = (weeks) => {
 
 const setPage = (page) => {
   const next = Number(page);
-  currentPage = next >= 0 && next < PAGES.length ? next : 0;
+  currentPage = next >= 0 && next < DAY_LABELS.length ? next : 0;
   document.querySelectorAll('.page-tab').forEach((btn) => {
     const active = Number(btn.dataset.page) === currentPage;
     btn.classList.toggle('is-active', active);

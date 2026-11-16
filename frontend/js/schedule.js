@@ -17,7 +17,7 @@
 
 import { ApiService } from "./api.js";
 
-// Dies lectius en l'ordre que espera el backend.
+// dies valits
 const DAYS = [
   { key: 'dilluns', label: 'Dilluns' },
   { key: 'dimarts', label: 'Dimarts' },
@@ -26,7 +26,7 @@ const DAYS = [
   { key: 'divendres', label: 'Divendres' }
 ];
 
-// Franges fixes de la graella. L'índex del bloc 1..6 es tradueix a hores.
+// franges horàries i pausa
 const SLOTS = {
   mati: {
     times: [
@@ -233,9 +233,6 @@ const init = () => {
   });
 
   saveButton.addEventListener('click', saveSchedule);
-
-  // Elimina dades antigues que es guardaven només al navegador.
-  localStorage.removeItem('guardats');
 
   if (window.userReady) {
     loadSchedule();
