@@ -1,13 +1,334 @@
 /*
   FITXER: css/reservations.css
   RESPONSABILITAT:
-    Estils de la pàgina de torns i historial (pages/reservations.html).
-
-  A TENIR EN COMPTE:
-    - Targetes o taula per als torns de càrrega.
-    - Colors per estat: Pending, InProgress, Completed, Cancelled, NotUsed.
-    - Separar visualment torns actuals i historial.
-    - Estat buit quan no hi ha torns.
-    - Disseny responsive: taula amb scroll horitzontal en mòbil.
-    - Reutilitzar les variables de color de css/style.css si existeixen.
+    Estils del calendari setmanal de torns (pages/admin/reservations.html).
 */
+
+.calendar {
+  overflow-x: auto;
+  padding: 0 20px 20px;
+  scrollbar-color: #36594c var(--surface);
+}
+
+.week-calendar {
+  --slot-h: 22px;
+  --hour-h: calc(var(--slot-h) * 2);
+  --day-count: 5;
+
+  min-width: 760px;
+}
+
+.week-calendar.week-calendar--small {
+  min-width: 560px;
+}
+
+.week-calendar.week-calendar--single {
+  min-width: 420px;
+}
+
+.week-calendar__head,
+.week-calendar__body {
+  display: grid;
+  grid-template-columns: 68px repeat(var(--day-count), minmax(0, 1fr));
+}
+
+/* ===== Capçalera ===== */
+
+.week-calendar__head {
+  border-bottom: 1px solid var(--border);
+  background: #112b27;
+}
+
+.week-calendar__corner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 10px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.week-calendar__day {
+  padding: 10px 12px;
+  border-left: 1px solid var(--border);
+  text-align: center;
+}
+
+.week-calendar__day strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.week-calendar__day span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-calendar__day.is-today {
+  background: #153e34;
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.week-calendar__day.is-today strong { color: var(--accent); }
+
+/* ===== Cos ===== */
+
+.week-calendar__body {
+  position: relative;
+  height: calc(var(--slot-h) * 26);
+}
+
+.week-calendar__times {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+.week-calendar__time {
+  height: var(--hour-h);
+  padding-right: 10px;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.week-calendar__time span {
+  display: block;
+  padding-top: 2px;
+}
+
+.week-calendar__col {
+  position: relative;
+  border-left: 1px solid var(--border);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--slot-h) - 1px),
+    #1b352e calc(var(--slot-h) - 1px),
+    #1b352e var(--slot-h)
+  );
+}
+
+.week-calendar__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* ===== Torns ===== */
+
+.shift {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-left-width: 3px;
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 1.2;
+  transition: box-shadow .15s, transform .15s;
+}
+
+.shift:hover {
+  z-index: 5;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 40%);
+  transform: translateY(-1px);
+}
+
+.shift__top,
+.shift__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.shift__name {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shift__time {
+  flex-shrink: 0;
+  font-size: 9px;
+  opacity: .9;
+  font-variant-numeric: tabular-nums;
+}
+
+.shift__charger {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--charger-color, var(--muted));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--charger-color, var(--muted)) 20%, transparent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.4;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shift__status-select {
+  flex-shrink: 0;
+  max-width: 110px;
+  padding: 1px 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #0f2421;
+  color: var(--text);
+  font-size: 9px;
+}
+
+/* Colors per estat */
+
+.shift--pending {
+  border-color: var(--warning);
+  background: #332d1e;
+  color: #f3ddb0;
+}
+
+.shift--inprogress {
+  border-color: var(--blue);
+  background: #132c42;
+  color: #cfe5fb;
+}
+
+.shift--completed {
+  border-color: var(--accent);
+  background: #10352d;
+  color: #bce9cf;
+}
+
+.shift--cancelled {
+  border-color: var(--danger);
+  background: #351b20;
+  color: #ffc4c9;
+  opacity: .75;
+}
+
+.shift--notused {
+  border-color: var(--muted);
+  background: #232a28;
+  color: #c3cfcc;
+}
+
+/* ===== Llegenda ===== */
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.calendar-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+}
+
+.calendar-legend__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.calendar-legend__item--pending { color: var(--warning); }
+.calendar-legend__item--inprogress { color: var(--blue); }
+.calendar-legend__item--completed { color: var(--accent); }
+.calendar-legend__item--cancelled { color: var(--danger); }
+.calendar-legend__item--notused { color: var(--muted); }
+
+.charger-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.charger-legend:empty { display: none; }
+
+.charger-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.charger-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+/* ===== Navegació ===== */
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.week-nav__label {
+  min-width: 150px;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.week-nav .btn {
+  min-width: 30px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 12px;
+}
+
+.page-tab.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #153e34;
+}
+
+/* ===== Adaptació ===== */
+
+@media (max-width: 700px) {
+  .calendar { padding-inline: 12px; }
+  .week-nav__label { min-width: 110px; }
+  .page-tabs { padding-inline: 12px; }
+}

@@ -1,18 +1,126 @@
-<!--
-  PÀGINA: pages/admin/holidays.html
-  RESPONSABILITAT:
-    Gestionar festius, vacances i dies no lectius.
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Festius · AulaCarrega</title>
+  <link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="../dash_admin.html">
+      <span class="brand__icon" aria-hidden="true">ϟ</span>
+      <span>
+        <span class="brand__name">aulacarrega</span>
+        <span class="brand__tagline">PANEL D'ADMINISTRACIÓ</span>
+      </span>
+    </a>
 
-  ENDPOINTS:
-    GET    /api/holidays
-    POST   /api/holidays
-    PATCH  /api/holidays/:id
-    DELETE /api/holidays/:id
+    <nav class="nav" aria-label="Navegació principal">
+      <p class="nav__heading">Gestió del centre</p>
+      <a class="nav__item" href="../dash_admin.html"><span class="nav__icon" aria-hidden="true">▦</span> Vista general</a>
+      <a class="nav__item" href="../chargers.html"><span class="nav__icon" aria-hidden="true">ϟ</span> Punts de càrrega</a>
+      <a class="nav__item" href="reservations.html"><span class="nav__icon" aria-hidden="true">▣</span> Reserves</a>
+      <a class="nav__item" href="users.html"><span class="nav__icon" aria-hidden="true">♧</span> Usuaris</a>
+      <a class="nav__item" href="reports.html"><span class="nav__icon" aria-hidden="true">▥</span> Informes</a>
+      <a class="nav__item is-active" href="holidays.html" aria-current="page"><span class="nav__icon" aria-hidden="true">▤</span> Festius</a>
+    </nav>
 
-  A TENIR EN COMPTE:
-    - Només accessible per a Admin.
-    - Camps: name, type, start_date, end_date i description.
-    - Tipus permesos: Holiday, Vacation, NonSchoolDay.
-    - Validar que end_date sigui igual o posterior a start_date.
-    - Filtrar per any o rang de dates per veure el calendari.
--->
+    <div class="sidebar__bottom">
+      <div class="profile">
+        <span class="profile__avatar" id="profileAvatar" aria-hidden="true">A</span>
+        <div class="profile__details">
+          <strong id="profileName">Administrador</strong>
+          <small id="profileRole">Admin</small>
+        </div>
+      </div>
+      <button class="btn btn--secondary sidebar__logout" id="logout" type="button">Tancar sessió</button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <nav class="breadcrumbs" aria-label="Ruta de navegació">
+        <a href="../dash_admin.html">Administració</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Festius</span>
+      </nav>
+      <div class="topbar__actions">
+        <span id="lastUpdated">Carregant…</span>
+        <button class="btn btn--secondary" id="refresh" type="button">Actualitzar</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="page-heading">
+        <div>
+          <h1>Festius i vacances</h1>
+          <p>Gestiona els dies no lectius. En aquests dies no es podran assignar torns de càrrega.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Afegir període">
+        <div class="panel__header">
+          <h2 class="panel__title" id="formTitle">Afegir període</h2>
+        </div>
+        <form id="holidayForm" class="toolbar" style="flex-wrap:wrap; align-items:flex-end;">
+          <input id="holidayId" type="hidden">
+          <div class="field">
+            <label for="name">Nom</label>
+            <input id="name" type="text" required>
+          </div>
+          <div class="field">
+            <label for="type">Tipus</label>
+            <select id="type" required>
+              <option value="Holiday">Holiday</option>
+              <option value="Vacation">Vacation</option>
+              <option value="NonSchoolDay">NonSchoolDay</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="startDate">Data inici</label>
+            <input id="startDate" type="date" required>
+          </div>
+          <div class="field">
+            <label for="endDate">Data fi</label>
+            <input id="endDate" type="date" required>
+          </div>
+          <div class="field" style="flex:1; min-width:220px;">
+            <label for="description">Descripció</label>
+            <input id="description" type="text" required>
+          </div>
+          <button class="btn btn--primary" id="submitBtn" type="submit">Afegir</button>
+          <button class="btn btn--secondary" id="cancelEditBtn" type="button" style="display:none;">Cancel·lar edició</button>
+        </form>
+        <p class="message" id="message" role="status"></p>
+      </section>
+
+      <section class="panel" aria-label="Llista de festius">
+        <div class="panel__header">
+          <h2 class="panel__title">Períodes registrats</h2>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Tipus</th>
+                <th>Inici</th>
+                <th>Fi</th>
+                <th>Descripció</th>
+                <th>Accions</th>
+              </tr>
+            </thead>
+            <tbody id="holidaysTable">
+              <tr><td colspan="6" class="empty-state">Carregant…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/dash_admin.js"></script>
+  <script type="module" src="../../js/admin/holidays.js"></script>
+</body>
+</html>

@@ -9,7 +9,8 @@ const {
   connectSchedule,
   disconnectSchedule,
   cancelSchedule,
-  deleteSchedule
+  deleteSchedule,
+  generateWeek
 } = require('../controllers/chargingSchedules');
 const { protect, requireRole } = require('../middlewares/auth');
 const validateObjectId = require('../middlewares/validateObjectId');
@@ -18,6 +19,7 @@ router.use(protect);
 
 router.get('/me', listMySchedules);
 router.get('/', requireRole('Admin'), listSchedules);
+router.post('/generate-week', requireRole('Admin'), generateWeek);
 router.get('/:id', validateObjectId, getSchedule);
 router.post('/', requireRole('Admin'), createSchedule);
 router.patch('/:id', requireRole('Admin'), validateObjectId, updateSchedule);

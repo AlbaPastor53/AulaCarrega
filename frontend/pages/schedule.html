@@ -11,7 +11,228 @@
     - Dies permesos: Dilluns, Dimarts, Dimecres, Dijous i Divendres.
     - Cada dia té: enabled (activat/desactivat) i blocks[].
     - Cada bloc té: start ("HH:MM"), end ("HH:MM") i type (Class | Break).
-    - Validar abans d'enviar: inici < fi i format d'hora correcte.
-    - Enviar el body com { week: [...] }.
-    - Mostrar missatge d'èxit o error provinent del backend.
+    - La UI mostra dos torns (Mati/Vesprada); cada cel·la correspon a un bloc.
+    - En desar s'envia el body com { week: [...] }.
 -->
+
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>El meu horari · AulaCarrega</title>
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/schedule.css">
+</head>
+
+<body>
+  <!-- MENÚ LATERAL -->
+  <aside class="sidebar">
+    <a class="brand" href="dash_user.html">
+      <span class="brand__icon" aria-hidden="true">ϟ</span>
+      <span>
+        <span class="brand__name">aulacarrega</span>
+        <span class="brand__tagline">ÀREA PERSONAL</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Navegació principal">
+      <p class="nav__heading">Menú</p>
+      <a class="nav__item" href="dash_user.html">
+        <span class="nav__icon" aria-hidden="true">▦</span>
+        Vista general
+      </a>
+      <a class="nav__item" href="chargers.html">
+        <span class="nav__icon" aria-hidden="true">ϟ</span>
+        Punts de càrrega
+      </a>
+      <a class="nav__item is-active" href="schedule.html" aria-current="page">
+        <span class="nav__icon" aria-hidden="true">⏱</span>
+        El meu horari
+      </a>
+    </nav>
+
+    <div class="sidebar__bottom">
+      <div class="profile">
+        <span class="profile__avatar" id="profileAvatar" aria-hidden="true">U</span>
+        <div class="profile__details">
+          <strong id="profileName">Usuari</strong>
+          <small id="profileRole">Usuari</small>
+        </div>
+      </div>
+      <button class="btn btn--secondary sidebar__logout" id="logout" type="button">
+        Tancar sessió
+      </button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <nav class="breadcrumbs" aria-label="Ruta de navegació">
+        <a href="dash_user.html">La meua àrea</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">El meu horari</span>
+      </nav>
+      <div class="topbar__actions">
+        <span id="lastUpdated">Carregant…</span>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="page-heading">
+        <div>
+          <h1>El meu horari</h1>
+          <p>Configura l'horari setmanal de classes marcant les hores que estas en l'institut.</p>
+          <p id="curs" class="muted"></p>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Horari setmanal">
+        <div class="toolbar">
+          <label for="horari" class="muted">Franja horària</label>
+          <select id="horari" name="horari" required>
+            <option value="mati">Mati</option>
+            <option value="vesprada">Vesprada</option>
+          </select>
+        </div>
+
+        <div class="schedule-container" id="scheduleContainer">
+          <table id="mati" class="schedule is-active" aria-label="Horari del matí">
+            <tr>
+              <td></td>
+              <th>Dilluns</th>
+              <th>Dimarts</th>
+              <th>Dimecres</th>
+              <th>Dijous</th>
+              <th>Divendres</th>
+            </tr>
+            <tr>
+              <th>08:00 – 08:55 h</th>
+              <td id="mati-dilluns-1"></td>
+              <td id="mati-dimarts-1"></td>
+              <td id="mati-dimecres-1"></td>
+              <td id="mati-dijous-1"></td>
+              <td id="mati-divendres-1"></td>
+            </tr>
+            <tr>
+              <th>08:55 – 09:50 h</th>
+              <td id="mati-dilluns-2"></td>
+              <td id="mati-dimarts-2"></td>
+              <td id="mati-dimecres-2"></td>
+              <td id="mati-dijous-2"></td>
+              <td id="mati-divendres-2"></td>
+            </tr>
+            <tr>
+              <th>09:50 – 10:45 h</th>
+              <td id="mati-dilluns-3"></td>
+              <td id="mati-dimarts-3"></td>
+              <td id="mati-dimecres-3"></td>
+              <td id="mati-dijous-3"></td>
+              <td id="mati-divendres-3"></td>
+            </tr>
+            <tr>
+              <th>10:45 – 11:15 h</th>
+              <td colspan="5" class="schedule__break">PATI</td>
+            </tr>
+            <tr>
+              <th>11:15 – 12:10 h</th>
+              <td id="mati-dilluns-4"></td>
+              <td id="mati-dimarts-4"></td>
+              <td id="mati-dimecres-4"></td>
+              <td id="mati-dijous-4"></td>
+              <td id="mati-divendres-4"></td>
+            </tr>
+            <tr>
+              <th>12:10 – 13:05 h</th>
+              <td id="mati-dilluns-5"></td>
+              <td id="mati-dimarts-5"></td>
+              <td id="mati-dimecres-5"></td>
+              <td id="mati-dijous-5"></td>
+              <td id="mati-divendres-5"></td>
+            </tr>
+            <tr>
+              <th>13:05 – 14:00 h</th>
+              <td id="mati-dilluns-6"></td>
+              <td id="mati-dimarts-6"></td>
+              <td id="mati-dimecres-6"></td>
+              <td id="mati-dijous-6"></td>
+              <td id="mati-divendres-6"></td>
+            </tr>
+          </table>
+
+          <table id="vesprada" class="schedule" aria-label="Horari de la vesprada">
+            <tr>
+              <td></td>
+              <th>Dilluns</th>
+              <th>Dimarts</th>
+              <th>Dimecres</th>
+              <th>Dijous</th>
+              <th>Divendres</th>
+            </tr>
+            <tr>
+              <th>15:10 – 16:05 h</th>
+              <td id="vesprada-dilluns-1"></td>
+              <td id="vesprada-dimarts-1"></td>
+              <td id="vesprada-dimecres-1"></td>
+              <td id="vesprada-dijous-1"></td>
+              <td id="vesprada-divendres-1"></td>
+            </tr>
+            <tr>
+              <th>16:05 – 17:00 h</th>
+              <td id="vesprada-dilluns-2"></td>
+              <td id="vesprada-dimarts-2"></td>
+              <td id="vesprada-dimecres-2"></td>
+              <td id="vesprada-dijous-2"></td>
+              <td id="vesprada-divendres-2"></td>
+            </tr>
+            <tr>
+              <th>17:00 – 17:55 h</th>
+              <td id="vesprada-dilluns-3"></td>
+              <td id="vesprada-dimarts-3"></td>
+              <td id="vesprada-dimecres-3"></td>
+              <td id="vesprada-dijous-3"></td>
+              <td id="vesprada-divendres-3"></td>
+            </tr>
+            <tr>
+              <th>17:55 – 18:15 h</th>
+              <td colspan="5" class="schedule__break">PATI</td>
+            </tr>
+            <tr>
+              <th>18:15 – 19:10 h</th>
+              <td id="vesprada-dilluns-4"></td>
+              <td id="vesprada-dimarts-4"></td>
+              <td id="vesprada-dimecres-4"></td>
+              <td id="vesprada-dijous-4"></td>
+              <td id="vesprada-divendres-4"></td>
+            </tr>
+            <tr>
+              <th>19:10 – 20:05 h</th>
+              <td id="vesprada-dilluns-5"></td>
+              <td id="vesprada-dimarts-5"></td>
+              <td id="vesprada-dimecres-5"></td>
+              <td id="vesprada-dijous-5"></td>
+              <td id="vesprada-divendres-5"></td>
+            </tr>
+            <tr>
+              <th>20:05 – 21:00 h</th>
+              <td id="vesprada-dilluns-6"></td>
+              <td id="vesprada-dimarts-6"></td>
+              <td id="vesprada-dimecres-6"></td>
+              <td id="vesprada-dijous-6"></td>
+              <td id="vesprada-divendres-6"></td>
+            </tr>
+          </table>
+        </div>
+
+        <footer class="panel__footer">
+          <p class="message" id="message" role="status"></p>
+          <button class="btn btn--primary" id="saveScheduleButton" type="button">Desar canvis</button>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/dash_shell.js"></script>
+  <script src="../js/schedule.js" type="module"></script>
+</body>
+</html>

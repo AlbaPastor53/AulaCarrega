@@ -1,8 +1,12 @@
 const ChargingSchedule = require('../models/ChargingSchedule');
+const ClassSchedule = require('../models/ClassSchedule');
+const Holiday = require('../models/Holiday');
 const User = require('../models/User');
 const Charger = require('../models/Charger');
+const ChargingHistory = require('../models/ChargingHistory');
 const { getPagination } = require('../utils/pagination');
 const { isValidTime, timeToMinutes, isValidDate, startOfDay } = require('../utils/dates');
+const { getWeekDays, buildWeekShifts } = require('../utils/shifts');
 
 const POPULATE = [
   { path: 'user_id', select: 'firstName lastName nia email' },
@@ -155,6 +159,52 @@ const createSchedule = async (req, res, next) => {
   }
 };
 
+// Calcula les hores reals d'un torn completat
+const getActualHours = (schedule) => {
+  if (schedule.connection_time && schedule.disconnection_time) {
+    const ms = new Date(schedule.disconnection_time) - new Date(schedule.connection_time);
+    const hours = Math.round((ms / 3600000) * 100) / 100;
+    if (hours >= 0) return hours;
+  }
+  return Number(schedule.assigned_hours) || 0;
+};
+
+// Guarda l'historial i actualitza el total d'hores de l'usuari
+const syncCompletion = async (schedule) => {
+  if (schedule.status !== 'Completed') return;
+
+  const actualHours = getActualHours(schedule);
+
+  if (schedule.actual_hours !== actualHours) {
+    schedule.actual_hours = actualHours;
+    await schedule.save();
+  }
+
+  await ChargingHistory.findOneAndUpdate(
+    { charging_schedule: schedule._id },
+    {
+      user: schedule.user_id,
+      charging_schedule: schedule._id,
+      charger: schedule.charger,
+      date: schedule.date,
+      action: 'Completed',
+      assigned_hours: schedule.assigned_hours || 0,
+      actual_hours: actualHours,
+      connection_time: schedule.connection_time || null,
+      disconnection_time: schedule.disconnection_time || null
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  const result = await ChargingHistory.aggregate([
+    { $match: { user: schedule.user_id } },
+    { $group: { _id: '$user', total: { $sum: '$actual_hours' } } }
+  ]);
+
+  const total = result[0]?.total || 0;
+  await User.findByIdAndUpdate(schedule.user_id, { total_hours: Math.round(total * 100) / 100 });
+};
+
 // PATCH /api/charging-schedules/:id (Admin)
 const updateSchedule = async (req, res, next) => {
   try {
@@ -191,12 +241,17 @@ const updateSchedule = async (req, res, next) => {
     const schedule = await ChargingSchedule.findByIdAndUpdate(req.params.id, changes, {
       new: true,
       runValidators: true
-    }).populate(POPULATE);
+    });
 
     if (!schedule) {
       return res.status(404).json({ message: 'Torn no trobat' });
     }
 
+    if (schedule.status === 'Completed') {
+      await syncCompletion(schedule);
+    }
+
+    await schedule.populate(POPULATE);
     return res.json({ message: 'Torn actualitzat', data: schedule });
   } catch (error) {
     return next(error);
@@ -243,6 +298,8 @@ const disconnectSchedule = async (req, res, next) => {
     schedule.disconnection_time = disconnection;
     schedule.actual_hours = actualHours;
     await schedule.save();
+    await syncCompletion(schedule);
+    await schedule.populate(POPULATE);
 
     return res.json({ message: 'Torn desconnectat', data: schedule });
   } catch (error) {
@@ -284,6 +341,75 @@ const deleteSchedule = async (req, res, next) => {
   }
 };
 
+// POST /api/charging-schedules/generate-week (Admin)
+const generateWeek = async (req, res, next) => {
+  try {
+    const { week_start, hours = 2 } = req.body;
+
+    if (!isValidDate(week_start)) {
+      return res.status(400).json({ message: 'Cal indicar week_start (YYYY-MM-DD)' });
+    }
+
+    if (![2, 3].includes(Number(hours))) {
+      return res.status(400).json({ message: 'La durada ha de ser de 2 o 3 hores' });
+    }
+
+    const days = getWeekDays(week_start);
+    const from = days[0];
+    const to = days[4];
+
+    const students = await User.find({ role: 'User', isActive: true })
+      .select('firstName lastName');
+
+    if (students.length === 0) {
+      return res.status(400).json({ message: 'No hi ha alumnes actius' });
+    }
+
+    const userIds = students.map((student) => student._id);
+
+    const [schedules, holidays, chargers, existingShifts] = await Promise.all([
+      ClassSchedule.find({ user_id: { $in: userIds } }),
+      Holiday.find(),
+      Charger.find({ isActive: true, status: 'Available' }),
+      ChargingSchedule.find({
+        date: { $gte: from, $lte: to },
+        status: { $ne: 'Cancelled' }
+      }).select('user_id charger date start_time end_time')
+    ]);
+
+    if (chargers.length === 0) {
+      return res.status(400).json({ message: 'No hi ha carregadors disponibles' });
+    }
+
+    const schedulesByUser = new Map(
+      schedules.map((schedule) => [String(schedule.user_id), schedule])
+    );
+
+    const newShifts = buildWeekShifts({
+      days,
+      students,
+      schedulesByUser,
+      holidays,
+      chargers,
+      existingShifts,
+      hours: Number(hours)
+    });
+
+    if (newShifts.length === 0) {
+      return res.json({ message: 'No hi ha torns per assignar aquesta setmana', data: [] });
+    }
+
+    const created = await ChargingSchedule.insertMany(newShifts);
+
+    return res.status(201).json({
+      message: `${created.length} torns assignats`,
+      data: created
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   listSchedules,
   listMySchedules,
@@ -293,5 +419,6 @@ module.exports = {
   connectSchedule,
   disconnectSchedule,
   cancelSchedule,
-  deleteSchedule
+  deleteSchedule,
+  generateWeek
 };

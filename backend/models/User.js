@@ -62,6 +62,12 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  // Hores totals de càrrega utilitzades per l'alumne
+  total_hours: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 }, {
   timestamps: true

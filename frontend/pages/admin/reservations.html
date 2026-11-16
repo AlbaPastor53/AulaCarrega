@@ -1,22 +1,162 @@
-<!--
-  PÀGINA: pages/admin/reservations.html
-  RESPONSABILITAT:
-    Gestionar els torns de càrrega de tots els usuaris.
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserves · AulaCarrega</title>
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <link rel="stylesheet" href="../../css/reservations.css">
+</head>
+<body>
+  <!-- Menú lateral -->
+  <aside class="sidebar">
+    <a class="brand" href="../dash_admin.html">
+      <span class="brand__icon" aria-hidden="true">ϟ</span>
+      <span>
+        <span class="brand__name">aulacarrega</span>
+        <span class="brand__tagline">PANEL D'ADMINISTRACIÓ</span>
+      </span>
+    </a>
 
-  ENDPOINTS:
-    GET   /api/charging-schedules
-    POST  /api/charging-schedules
-    PATCH /api/charging-schedules/:id
-    POST  /api/charging-schedules/:id/connect
-    POST  /api/charging-schedules/:id/disconnect
-    POST  /api/charging-schedules/:id/cancel
-    DELETE /api/charging-schedules/:id
+    <nav class="nav" aria-label="Navegació principal">
+      <p class="nav__heading">Gestió del centre</p>
+      <a class="nav__item" href="../dash_admin.html">
+        <span class="nav__icon" aria-hidden="true">▦</span>
+        Vista general
+      </a>
+      <a class="nav__item" href="../chargers.html">
+        <span class="nav__icon" aria-hidden="true">ϟ</span>
+        Punts de càrrega
+      </a>
+      <a class="nav__item is-active" href="reservations.html" aria-current="page">
+        <span class="nav__icon" aria-hidden="true">▣</span>
+        Reserves
+      </a>
+      <a class="nav__item" href="users.html">
+        <span class="nav__icon" aria-hidden="true">♧</span>
+        Usuaris
+      </a>
+      <a class="nav__item" href="reports.html">
+        <span class="nav__icon" aria-hidden="true">▥</span>
+        Informes
+      </a>
+      <a class="nav__item" href="holidays.html">
+        <span class="nav__icon" aria-hidden="true">▤</span>
+        Festius
+      </a>
+    </nav>
 
-  A TENIR EN COMPTE:
-    - Només accessible per a Admin.
-    - Filtres: date, from, to, user, charger i status.
-    - En crear: user_id, charger, date, start_time, end_time i assigned_hours.
-    - El backend rebutja solapaments de carregador o d'usuari.
-    - No es pot completar un torn sense connexió i desconnexió.
-    - Mostrar noms d'usuari i carregador, no només els ObjectId.
--->
+    <div class="sidebar__bottom">
+      <div class="profile">
+        <span class="profile__avatar" id="profileAvatar" aria-hidden="true">A</span>
+        <div class="profile__details">
+          <strong id="profileName">Administrador</strong>
+          <small id="profileRole">Admin</small>
+        </div>
+      </div>
+      <button class="btn btn--secondary sidebar__logout" id="logout" type="button">
+        Tancar sessió
+      </button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <nav class="breadcrumbs" aria-label="Ruta de navegació">
+        <a href="../dash_admin.html">Administració</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Reserves</span>
+      </nav>
+      <div class="topbar__actions">
+        <span id="lastUpdated">Carregant…</span>
+        <button class="btn btn--secondary" id="refresh" type="button">Actualitzar</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="page-heading">
+        <div>
+          <h1>Reserves</h1>
+          <p>Genera els torns de càrrega setmanals segons l'horari dels alumnes.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Generar torns de la setmana">
+        <form id="generateForm" class="toolbar">
+          <div class="field">
+            <label for="weekStart">Setmana (qualsevol dia)</label>
+            <input id="weekStart" type="date" required>
+          </div>
+
+          <div class="field">
+            <label for="hours">Durada del torn</label>
+            <select id="hours">
+              <option value="2">2 hores</option>
+              <option value="3">3 hores</option>
+            </select>
+          </div>
+
+          <button class="btn btn--primary" type="submit">Generar setmana</button>
+        </form>
+
+        <p class="message" id="message" role="status"></p>
+      </section>
+
+      <section class="panel" aria-label="Calendari setmanal de torns">
+        <div class="panel__header">
+          <h2 class="panel__title">Calendari setmanal</h2>
+
+          <div class="week-nav">
+            <button class="btn btn--secondary btn--sm" id="prevWeek" type="button"
+              aria-label="Setmana anterior">‹</button>
+            <span class="week-nav__label" id="weekLabel">Carregant…</span>
+            <button class="btn btn--secondary btn--sm" id="nextWeek" type="button"
+              aria-label="Setmana següent">›</button>
+          </div>
+        </div>
+
+        <div class="page-tabs" role="tablist" aria-label="Dies de la setmana">
+          <button class="btn btn--secondary btn--sm page-tab is-active" type="button" data-page="0" role="tab" aria-selected="true">Dilluns</button>
+          <button class="btn btn--secondary btn--sm page-tab" type="button" data-page="1" role="tab" aria-selected="false">Dimarts</button>
+          <button class="btn btn--secondary btn--sm page-tab" type="button" data-page="2" role="tab" aria-selected="false">Dimecres</button>
+          <button class="btn btn--secondary btn--sm page-tab" type="button" data-page="3" role="tab" aria-selected="false">Dijous</button>
+          <button class="btn btn--secondary btn--sm page-tab" type="button" data-page="4" role="tab" aria-selected="false">Divendres</button>
+        </div>
+
+        <div class="calendar-legend" aria-label="Llegenda d'estats">
+          <span class="calendar-legend__item calendar-legend__item--pending">
+            <span class="calendar-legend__dot" aria-hidden="true"></span>Pendent
+          </span>
+          <span class="calendar-legend__item calendar-legend__item--inprogress">
+            <span class="calendar-legend__dot" aria-hidden="true"></span>En curs
+          </span>
+          <span class="calendar-legend__item calendar-legend__item--completed">
+            <span class="calendar-legend__dot" aria-hidden="true"></span>Completat
+          </span>
+          <span class="calendar-legend__item calendar-legend__item--cancelled">
+            <span class="calendar-legend__dot" aria-hidden="true"></span>Cancel·lat
+          </span>
+          <span class="calendar-legend__item calendar-legend__item--notused">
+            <span class="calendar-legend__dot" aria-hidden="true"></span>No utilitzat
+          </span>
+        </div>
+
+        <div class="charger-legend" id="chargerLegend" aria-label="Llegenda de carregadors"></div>
+
+        <div class="calendar">
+          <div class="week-calendar" id="weekCalendar" aria-label="Calendari setmanal de torns">
+            <p class="empty-state" id="calendarLoading">Carregant torns…</p>
+          </div>
+        </div>
+
+        <footer class="panel__footer">
+          <p id="listSummary">0 torns</p>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/dash_admin.js"></script>
+  <script type="module" src="../../js/admin/reservations.js"></script>
+</body>
+</html>

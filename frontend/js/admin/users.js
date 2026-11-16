@@ -1,6 +1,9 @@
 import { ApiService } from "../api.js";
 
 let users = [];
+let scheduleUserId = null;
+
+const DAYS = ['Dilluns', 'Dimarts', 'Dimecres', 'Dijous', 'Divendres'];
 
 // Opcions d'estudis segons el tipus de curs.
 const ESTUDIS = {
@@ -28,38 +31,34 @@ const ESTUDIS = {
   ]
 };
 
-// Converteix caràcters especials per poder mostrar-los sense problemes a la taula.
 const escapeHtml = (value) => {
-  const symbols = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  };
-
+  const symbols = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   return String(value ?? '').replace(/[&<>"']/g, (char) => symbols[char]);
 };
 
 const showMessage = (text, ok = true) => {
   const message = document.getElementById('message');
   message.textContent = text;
-  message.style.color = ok ? 'var(--accent)' : '#ff9aa2';
+  message.classList.toggle('is-error', !ok);
 };
 
 const showUserModalMessage = (text, ok = true) => {
   const message = document.getElementById('userModalMessage');
   message.textContent = text;
-  message.style.color = ok ? 'var(--accent)' : '#ff9aa2';
+  message.classList.toggle('is-error', !ok);
+};
+
+const showScheduleModalMessage = (text, ok = true) => {
+  const message = document.getElementById('scheduleModalMessage');
+  message.textContent = text;
+  message.classList.toggle('is-error', !ok);
 };
 
 const omplirEstudis = () => {
   const course = document.getElementById('newCourse').value;
   const estudis = document.getElementById('newEstudis');
   const options = ESTUDIS[course] || [];
-
   estudis.innerHTML = '<option value="">Selecciona els estudis</option>';
-
   options.forEach((nom) => {
     const option = document.createElement('option');
     option.value = nom;
@@ -70,8 +69,7 @@ const omplirEstudis = () => {
 
 const resetUserForm = () => {
   document.getElementById('userForm').reset();
-  document.getElementById('newEstudis').innerHTML =
-    '<option value="">Selecciona els estudis</option>';
+  document.getElementById('newEstudis').innerHTML = '<option value="">Selecciona els estudis</option>';
   showUserModalMessage('');
 };
 
@@ -85,7 +83,6 @@ const render = () => {
     const matchesSearch = `${fullName} ${user.email || ''}`.toLowerCase().includes(search);
     const matchesRole = role === '' || user.role === role;
     const matchesActive = active === '' || (active === 'active' ? user.isActive : !user.isActive);
-
     return matchesSearch && matchesRole && matchesActive;
   });
 
@@ -94,13 +91,12 @@ const render = () => {
 
   if (visibleUsers.length === 0) {
     document.getElementById('usersTable').innerHTML =
-      '<tr><td colspan="5" class="empty-state">No hi ha usuaris disponibles.</td></tr>';
+      '<tr><td colspan="6" class="empty-state">No hi ha usuaris disponibles.</td></tr>';
     return;
   }
 
   document.getElementById('usersTable').innerHTML = visibleUsers.map((user) => {
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-
     return `
       <tr>
         <td>${escapeHtml(fullName)}</td>
@@ -114,21 +110,26 @@ const render = () => {
         <td>
           <div class="actions">
             <span>${user.isActive ? 'Actiu' : 'Inactiu'}</span>
-            <button class="button button--secondary" data-action="toggle" data-id="${user._id}">
+            <button class="btn btn--secondary btn--sm" data-action="toggle" data-id="${user._id}">
               ${user.isActive ? 'Desactivar' : 'Activar'}
             </button>
           </div>
         </td>
         <td>
           <div class="actions">
-            <input class="penalties-input" type="number" min="0" step="1"
+            <input class="input--xs" type="number" min="0" step="1"
               value="${Number(user.penalties) || 0}"
               data-action="penalties" data-id="${user._id}"
               aria-label="Penalitzacions">
-            <button class="button button--secondary" data-action="save-penalties" data-id="${user._id}">
+            <button class="btn btn--secondary btn--sm" data-action="save-penalties" data-id="${user._id}">
               Guardar
             </button>
           </div>
+        </td>
+        <td>
+          <button class="btn btn--secondary btn--sm" data-action="schedule" data-id="${user._id}">
+            Veure / Editar
+          </button>
         </td>
       </tr>
     `;
@@ -138,18 +139,84 @@ const render = () => {
 const loadUsers = async () => {
   try {
     document.getElementById('lastUpdated').textContent = 'Carregant…';
-
     const response = await ApiService.api('/users?limit=100');
     users = response.data || [];
-
     render();
     document.getElementById('lastUpdated').textContent =
       `Actualitzat a les ${new Date().toLocaleTimeString('ca-ES')}`;
   } catch (error) {
     document.getElementById('usersTable').innerHTML =
-      `<tr><td colspan="5" class="empty-state">${escapeHtml(error.message)}</td></tr>`;
+      `<tr><td colspan="6" class="empty-state">${escapeHtml(error.message)}</td></tr>`;
     document.getElementById('lastUpdated').textContent = 'Error de connexió';
   }
+};
+
+/* ===== Horari de l'usuari ===== */
+
+const renderBlockRow = (block = {}) => {
+  const start = block.start || '08:00';
+  const end = block.end || '09:00';
+  const type = block.type || 'Class';
+  return `
+    <div class="schedule-block">
+      <input type="time" class="block-start" value="${escapeHtml(start)}">
+      <span>-</span>
+      <input type="time" class="block-end" value="${escapeHtml(end)}">
+      <select class="block-type">
+        <option value="Class" ${type === 'Class' ? 'selected' : ''}>Classe</option>
+        <option value="Break" ${type === 'Break' ? 'selected' : ''}>Pati</option>
+      </select>
+      <button type="button" class="btn btn--secondary btn--sm remove-block">Eliminar</button>
+    </div>
+  `;
+};
+
+const renderScheduleEditor = (week = []) => {
+  const editor = document.getElementById('scheduleEditor');
+  editor.innerHTML = DAYS.map((dayName) => {
+    const dayData = week.find((d) => d.day === dayName) || { day: dayName, enabled: false, blocks: [] };
+    const blocks = Array.isArray(dayData.blocks) ? dayData.blocks : [];
+    return `
+      <section class="schedule-day" data-day="${escapeHtml(dayName)}">
+        <div class="schedule-day__header">
+          <strong>${escapeHtml(dayName)}</strong>
+          <button type="button" class="btn btn--secondary btn--sm add-block">+ Afegir bloc</button>
+        </div>
+        <div class="schedule-day__blocks">
+          ${blocks.map(renderBlockRow).join('')}
+        </div>
+      </section>
+    `;
+  }).join('');
+};
+
+const openScheduleModal = async (user) => {
+  scheduleUserId = user._id;
+  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  document.getElementById('scheduleTitle').textContent = `Horari de ${fullName || 'l\'usuari'}`;
+  showScheduleModalMessage('');
+
+  try {
+    const response = await ApiService.api(`/class-schedules/${user._id}`);
+    const week = response.data?.week || [];
+    renderScheduleEditor(week);
+    document.getElementById('scheduleModal').showModal();
+  } catch (error) {
+    showMessage(error.message, false);
+  }
+};
+
+const buildWeekFromEditor = () => {
+  return DAYS.map((dayName) => {
+    const dayEl = document.querySelector(`.schedule-day[data-day="${dayName}"]`);
+    const rows = dayEl ? Array.from(dayEl.querySelectorAll('.schedule-block')) : [];
+    const blocks = rows.map((row) => ({
+      start: row.querySelector('.block-start').value,
+      end: row.querySelector('.block-end').value,
+      type: row.querySelector('.block-type').value
+    }));
+    return { day: dayName, enabled: blocks.length > 0, blocks };
+  });
 };
 
 const init = () => {
@@ -163,22 +230,18 @@ const init = () => {
   document.getElementById('filterActive').addEventListener('change', render);
   document.getElementById('refresh').addEventListener('click', loadUsers);
 
-  // Obrir i tancar la finestra de creació.
+  // Crear usuari
   document.getElementById('openUserModal').addEventListener('click', () => {
     resetUserForm();
     document.getElementById('userModal').showModal();
   });
-
   document.getElementById('cancelUserModal').addEventListener('click', () => {
     document.getElementById('userModal').close();
   });
-
   document.getElementById('newCourse').addEventListener('change', omplirEstudis);
 
-  // Crear un usuari.
   document.getElementById('userForm').addEventListener('submit', async (event) => {
     event.preventDefault();
-
     const userData = {
       firstName: document.getElementById('newFirstName').value.trim(),
       lastName: document.getElementById('newLastName').value.trim(),
@@ -191,18 +254,12 @@ const init = () => {
       role: document.getElementById('newRole').value,
       isActive: document.getElementById('newUserActive').checked
     };
-
     if (!userData.estudis) {
       showUserModalMessage('Selecciona els estudis concrets.', false);
       return;
     }
-
     try {
-      await ApiService.api('/users', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-      });
-
+      await ApiService.api('/users', { method: 'POST', body: JSON.stringify(userData) });
       document.getElementById('userModal').close();
       resetUserForm();
       showMessage('Usuari creat correctament.');
@@ -212,20 +269,14 @@ const init = () => {
     }
   });
 
-  // Canviar el rol d'un usuari.
+  // Canviar rol
   document.getElementById('usersTable').addEventListener('change', async (event) => {
     const select = event.target.closest('select[data-action="role"]');
     if (!select) return;
-
     const user = users.find((item) => item._id === select.dataset.id);
     if (!user || select.value === user.role) return;
-
     try {
-      await ApiService.api(`/users/${user._id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role: select.value })
-      });
-
+      await ApiService.api(`/users/${user._id}`, { method: 'PATCH', body: JSON.stringify({ role: select.value }) });
       showMessage('Rol actualitzat.');
       await loadUsers();
     } catch (error) {
@@ -234,11 +285,10 @@ const init = () => {
     }
   });
 
-  // Activar, desactivar o guardar penalitzacions.
+  // Accions de la taula
   document.getElementById('usersTable').addEventListener('click', async (event) => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
-
     const user = users.find((item) => item._id === button.dataset.id);
     if (!user) return;
 
@@ -248,32 +298,65 @@ const init = () => {
           method: 'PATCH',
           body: JSON.stringify({ isActive: !user.isActive })
         });
-
         showMessage('Estat actualitzat.');
         await loadUsers();
       }
 
       if (button.dataset.action === 'save-penalties') {
-        const input = document.querySelector(
-          `input[data-action="penalties"][data-id="${user._id}"]`
-        );
+        const input = document.querySelector(`input[data-action="penalties"][data-id="${user._id}"]`);
         const penalties = Number(input.value);
-
         if (!Number.isInteger(penalties) || penalties < 0) {
           showMessage('Les penalitzacions han de ser un enter igual o superior a 0.', false);
           return;
         }
-
         await ApiService.api(`/users/${user._id}/penalties`, {
           method: 'PATCH',
           body: JSON.stringify({ penalties })
         });
-
         showMessage('Penalitzacions actualitzades.');
         await loadUsers();
       }
+
+      if (button.dataset.action === 'schedule') {
+        await openScheduleModal(user);
+      }
     } catch (error) {
       showMessage(error.message, false);
+    }
+  });
+
+  // Editor d'horari
+  document.getElementById('cancelScheduleModal').addEventListener('click', () => {
+    document.getElementById('scheduleModal').close();
+  });
+
+  document.getElementById('scheduleEditor').addEventListener('click', (event) => {
+    const addBtn = event.target.closest('.add-block');
+    if (addBtn) {
+      const blocks = addBtn.closest('.schedule-day').querySelector('.schedule-day__blocks');
+      blocks.insertAdjacentHTML('beforeend', renderBlockRow());
+      return;
+    }
+    const removeBtn = event.target.closest('.remove-block');
+    if (removeBtn) {
+      removeBtn.closest('.schedule-block').remove();
+    }
+  });
+
+  document.getElementById('scheduleForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!scheduleUserId) return;
+    try {
+      const week = buildWeekFromEditor();
+      await ApiService.api(`/class-schedules/${scheduleUserId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ week })
+      });
+      showScheduleModalMessage('');
+      document.getElementById('scheduleModal').close();
+      showMessage('Horari guardat correctament.');
+    } catch (error) {
+      showScheduleModalMessage(error.message, false);
     }
   });
 

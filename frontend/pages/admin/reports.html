@@ -1,16 +1,166 @@
-<!--
-  PÀGINA: pages/admin/reports.html
-  RESPONSABILITAT:
-    Consultar l'historial global i les estadístiques de càrrega.
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informes · AulaCarrega</title>
+  <link rel="stylesheet" href="../../css/dashboard.css">
+  <style>
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .report-card { display: flex; flex-direction: column; min-height: 260px; }
+    .report-card .panel__header { padding-bottom: 10px; }
+    .report-body { padding: 0 20px 20px; flex: 1; }
+    .report-filter { display: flex; gap: 10px; align-items: end; margin-bottom: 12px; }
+    .report-filter .field { min-width: 220px; }
+    .student-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 260px; overflow: auto; }
+    .student-list li {
+      padding: 8px 10px;
+      border: 1px solid var(--border, #2a4a42);
+      border-radius: 6px;
+      background: rgba(255,255,255,.02);
+      font-size: 13px;
+    }
+    .student-list .muted { color: var(--muted); font-size: 12px; }
+    .stat-box {
+      display: grid;
+      gap: 6px;
+      padding: 18px;
+      border: 1px solid var(--border, #2a4a42);
+      border-radius: 10px;
+      background: #112b27;
+    }
+    .stat-label { color: var(--muted); font-size: 12px; }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--text, #fff); }
+    .stat-sub { font-size: 13px; color: var(--accent, #4ec9b0); }
+    .empty-note { color: var(--muted); font-size: 13px; margin: 0; }
+    @media (max-width: 900px) {
+      .reports-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="../dash_admin.html">
+      <span class="brand__icon" aria-hidden="true">ϟ</span>
+      <span>
+        <span class="brand__name">aulacarrega</span>
+        <span class="brand__tagline">PANEL D'ADMINISTRACIÓ</span>
+      </span>
+    </a>
 
-  ENDPOINTS:
-    GET /api/charging-history
-    GET /api/charging-history?user=&charger=&action=&from=&to=
+    <nav class="nav" aria-label="Navegació principal">
+      <p class="nav__heading">Gestió del centre</p>
+      <a class="nav__item" href="../dash_admin.html"><span class="nav__icon" aria-hidden="true">▦</span> Vista general</a>
+      <a class="nav__item" href="../chargers.html"><span class="nav__icon" aria-hidden="true">ϟ</span> Punts de càrrega</a>
+      <a class="nav__item" href="reservations.html"><span class="nav__icon" aria-hidden="true">▣</span> Reserves</a>
+      <a class="nav__item" href="users.html"><span class="nav__icon" aria-hidden="true">♧</span> Usuaris</a>
+      <a class="nav__item is-active" href="reports.html" aria-current="page"><span class="nav__icon" aria-hidden="true">▥</span> Informes</a>
+      <a class="nav__item" href="holidays.html"><span class="nav__icon" aria-hidden="true">▤</span> Festius</a>
+    </nav>
 
-  A TENIR EN COMPTE:
-    - Només accessible per a Admin.
-    - Accions possibles: Completed, NotUsed, Cancelled.
-    - Mostrar hores assignades vs. hores reals.
-    - Permetre filtrar per usuari, carregador, acció i rang de dates.
-    - Si es mostren gràfics, calcular-los en el client a partir de les dades.
--->
+    <div class="sidebar__bottom">
+      <div class="profile">
+        <span class="profile__avatar" id="profileAvatar" aria-hidden="true">A</span>
+        <div class="profile__details">
+          <strong id="profileName">Administrador</strong>
+          <small id="profileRole">Admin</small>
+        </div>
+      </div>
+      <button class="btn btn--secondary sidebar__logout" id="logout" type="button">Tancar sessió</button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <nav class="breadcrumbs" aria-label="Ruta de navegació">
+        <a href="../dash_admin.html">Administració</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Informes</span>
+      </nav>
+      <div class="topbar__actions">
+        <span id="lastUpdated">Carregant…</span>
+        <button class="btn btn--secondary" id="refresh" type="button">Actualitzar</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="page-heading">
+        <div>
+          <h1>Informes</h1>
+          <p>Resum d’alumnes, carregadors i ús del sistema.</p>
+        </div>
+      </section>
+
+      <p class="message" id="message" role="status"></p>
+
+      <section class="reports-grid" aria-label="Informes">
+        <article class="panel report-card">
+          <div class="panel__header">
+            <h2 class="panel__title">1. Alumnes per estudis</h2>
+          </div>
+          <div class="report-body">
+            <div class="report-filter">
+              <div class="field">
+                <label for="estudisFilter">Filtra per estudis</label>
+                <select id="estudisFilter">
+                  <option value="">Tots els estudis</option>
+                </select>
+              </div>
+            </div>
+            <ul id="studentsByEstudis" class="student-list"><li>Carregant…</li></ul>
+          </div>
+        </article>
+
+        <article class="panel report-card">
+          <div class="panel__header">
+            <h2 class="panel__title">2. Hores utilitzades per carregador</h2>
+          </div>
+          <div class="report-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr><th>Carregador</th><th>Hores utilitzades</th></tr>
+                </thead>
+                <tbody id="hoursByCharger"><tr><td colspan="2" class="empty-state">Carregant…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel report-card">
+          <div class="panel__header">
+            <h2 class="panel__title">3. Alumne amb més hores de càrrega</h2>
+          </div>
+          <div class="report-body">
+            <div class="stat-box">
+              <span class="stat-label">Més hores utilitzades</span>
+              <div id="topHoursUserName" class="stat-value">—</div>
+              <div id="topHoursUserValue" class="stat-sub">Carregant…</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel report-card">
+          <div class="panel__header">
+            <h2 class="panel__title">4. Alumne amb més penalitzacions</h2>
+          </div>
+          <div class="report-body">
+            <div class="stat-box">
+              <span class="stat-label">Més penalitzacions</span>
+              <div id="topPenaltiesUserName" class="stat-value">—</div>
+              <div id="topPenaltiesUserValue" class="stat-sub">Carregant…</div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/dash_admin.js"></script>
+  <script type="module" src="../../js/admin/reports.js"></script>
+</body>
+</html>

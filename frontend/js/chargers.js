@@ -1,9 +1,9 @@
 import { ApiService } from "./api.js";
 
 const STATUS = {
-  Available: { label: 'Operatiu', badge: 'badge--available' },
-  Maintenance: { label: 'Manteniment', badge: 'badge--maintenance' },
-  Broken: { label: 'Averiat', badge: 'badge--broken' }
+  Available: { label: 'Operatiu', badge: 'badge--success' },
+  Maintenance: { label: 'Manteniment', badge: 'badge--warning' },
+  Broken: { label: 'Averiat', badge: 'badge--danger' }
 };
 
 let chargers = [];
@@ -27,13 +27,13 @@ const escapeHtml = (value) => {
 const showMessage = (text, ok = true) => {
   const message = document.getElementById('message');
   message.textContent = text;
-  message.style.color = ok ? 'var(--accent)' : '#ff9aa2';
+  message.classList.toggle('is-error', !ok);
 };
 
 const showChargerModalMessage = (text, ok = true) => {
   const message = document.getElementById('chargerModalMessage');
   message.textContent = text;
-  message.style.color = ok ? 'var(--accent)' : '#ff9aa2';
+  message.classList.toggle('is-error', !ok);
 };
 
 const render = () => {
@@ -77,11 +77,11 @@ if (isAdmin) {
         ${options}
       </select>
 
-      <button class="button button--secondary" data-action="toggle" data-id="${charger._id}">
+      <button class="btn btn--secondary btn--sm" data-action="toggle" data-id="${charger._id}">
         ${charger.isActive ? 'Desactivar' : 'Activar'}
       </button>
 
-      <button class="button button--secondary" data-action="delete" data-id="${charger._id}">
+      <button class="btn btn--secondary btn--sm" data-action="delete" data-id="${charger._id}">
         Eliminar
       </button>
     `;
@@ -91,7 +91,7 @@ if (isAdmin) {
       <tr>
         <td>
           <div class="point">
-            <span class="point-icon" aria-hidden="true">ϟ</span>
+            <span class="point__icon" aria-hidden="true">ϟ</span>
             ${escapeHtml(charger.name)}
           </div>
         </td>
@@ -229,5 +229,8 @@ const init = () => {
   loadChargers();
 };
 
+// Només arranquem si dash_shell.js ha confirmat que hi ha sessió.
+if (window.userReady) {
   init();
+}
 
